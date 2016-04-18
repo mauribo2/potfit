@@ -113,11 +113,13 @@ SHELL = /bin/bash
 # i686-gcc      32bit GNU Compiler
 
 #SYSTEM = i686-gcc
-SYSTEM = x86_64-clang
+SYSTEM = x86_64-gcc
+
+BIN_DIR = bin/
 
 # Base directory of your installation of the MKL or ACML
 
-MKLDIR      = /opt/intel/composer_xe_2013.3.163/mkl
+MKLDIR      = ${MKLROOT}
 ACML4DIR    = /opt/acml4.4.0/gfortran64
 ACML5DIR    = /opt/acml/gfortran64
 LIBMDIR     = /opt/acml/libm

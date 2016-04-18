@@ -319,9 +319,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
             /* updating tail-functions - only necessary with variing kappa */
             if (!apt->sw_kappa)
-              elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
+              elstat_dsf(neigh->r, dp_kappa, &neigh->fnval_el,
                            &neigh->grad_el, &neigh->ggrad_el);
-
             /* In small cells, an atom might interact with itself */
             self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
@@ -375,6 +374,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                 (charge[type1] || charge[type2])) {
               fnval_tail = neigh->fnval_el;
               grad_tail = neigh->grad_el;
+
 
               grad_i = charge[type2] * grad_tail;
               if (type1 == type2) {
@@ -794,6 +794,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
         /* F I F T H  loop: self energy contributions and sum-up force
          * contributions */
         double qq;
+	double fnval_cut, gtail_cut, ggrad_cut;
+        elstat_value(g_config.dp_cut, dp_kappa, &fnval_cut, &gtail_cut, &ggrad_cut);
 #if defined(DIPOLE)
         double pp;
 #endif                                             // DIPOLE
@@ -806,7 +808,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           /* self energy contributions */
           if (charge[type1]) {
             qq = charge[type1] * charge[type1];
-            fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
+	    fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
+	       (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
             forces[g_calc.energy_p + h] -= fnval;
           }
 #if defined(DIPOLE)
