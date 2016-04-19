@@ -516,6 +516,9 @@ void calculate_cutoffs()
     for (int j = 0; j < n; j++) {
       g_config.rcutmin = MIN(g_config.rcutmin, g_config.rcut[i + n * j]);
       g_config.rcutmax = MAX(g_config.rcutmax, g_config.rcut[i + n * j]);
+#if defined(COULOMB)
+      g_config.rcutmax = MAX(g_config.rcutmax, g_config.dp_cut);
+#endif
     }
   }
 }

@@ -375,7 +375,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               fnval_tail = neigh->fnval_el;
               grad_tail = neigh->grad_el;
 
-
               grad_i = charge[type2] * grad_tail;
               if (type1 == type2) {
                 grad_j = grad_i;
