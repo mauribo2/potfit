@@ -961,12 +961,7 @@ void init_neighbors(config_state* cstate, double* mindist)
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[j].type;
 
-#if defined(COULOMB)
-            double bigrcut = MAX(g_config.rcut[type1 * g_param.ntypes + type2], g_config.dp_cut );
-            if (r <= bigrcut) {
-#else
             if (r <= g_config.rcut[type1 * g_param.ntypes + type2]) {
-#endif
               int short_distance = 0;
 
               if (r <= g_config.rmin[type1 * g_param.ntypes + type2]) {
