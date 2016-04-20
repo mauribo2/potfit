@@ -570,7 +570,6 @@ void read_config(const char* filename)
   update_slots();
 #endif  // APOT
 
-
   print_minimal_distances_matrix(mindist);
 }
 
