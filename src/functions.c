@@ -398,7 +398,7 @@ void elstat_value(double r, double dp_kappa, double* ftail, double* gtail,
 
 /****************************************************************
   elstat_shift
-    shifted tail of coloumb potential
+    shifted tail of couloumb potential
 ****************************************************************/
 
 void elstat_shift(double r, double dp_kappa, double* fnval_tail,
@@ -431,6 +431,7 @@ void elstat_shift(double r, double dp_kappa, double* fnval_tail,
  *
  ****************************************************************/
 
+#if defined(DSF)
 void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
 		double *grad_tail, double *ggrad_tail)
 {
@@ -453,7 +454,7 @@ void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
   *ggrad_tail = ggtail - ggtail_cut;
 #endif /* DIPOLE */
 }
-
+#endif //DSF
 
 /****************************************************************
   init_tails
@@ -464,10 +465,17 @@ void init_tails(double dp_kappa)
 {
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+#if defined(DSF)
       elstat_dsf(g_config.atoms[i].neigh[j].r, dp_kappa,
                    &g_config.atoms[i].neigh[j].fnval_el,
                    &g_config.atoms[i].neigh[j].grad_el,
                    &g_config.atoms[i].neigh[j].ggrad_el);
+#else
+      elstat_shift(g_config.atoms[i].neigh[j].r, dp_kappa,
+                   &g_config.atoms[i].neigh[j].fnval_el,
+                   &g_config.atoms[i].neigh[j].grad_el,
+                   &g_config.atoms[i].neigh[j].ggrad_el);
+#endif //DSF
     }
   }
 }
