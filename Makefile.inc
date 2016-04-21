@@ -175,7 +175,7 @@ endif
 ifeq (x86_64-gcc,${SYSTEM})
 # compiler
   CC_SERIAL     = gcc
-  CC_MPI        = mpicc
+  CC_MPI        = /usr/bin/mpicc
   OMPI_CC       = gcc
   OMPI_CLINKER  = gcc
 
