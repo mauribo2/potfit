@@ -115,8 +115,6 @@ SHELL = /bin/bash
 #SYSTEM = i686-gcc
 SYSTEM = x86_64-gcc
 
-BIN_DIR = bin/
-
 # Base directory of your installation of the MKL or ACML
 
 MKLDIR      = ${MKLROOT}
