@@ -398,7 +398,7 @@ void elstat_value(double r, double dp_kappa, double* ftail, double* gtail,
 
 /****************************************************************
   elstat_shift
-    shifted tail of couloumb potential
+    shifted tail of coulomb potential
 ****************************************************************/
 
 void elstat_shift(double r, double dp_kappa, double* fnval_tail,
