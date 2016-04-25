@@ -392,8 +392,8 @@ void elstat_value(double r, double dp_kappa, double* ftail, double* gtail,
   x[3] = exp(-x[0] * x[1]);
 
   *ftail = DP_EPS * erfc(dp_kappa * r) / r;
-  *gtail = -(*ftail + x[2] * x[3]) / x[0];        /* 1/r df/dr */
-  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];                  /* 1/r df/dr */
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];   /* 1/r dg/dr */
 }
 
 /****************************************************************
@@ -446,7 +446,7 @@ void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
   elstat_value(g_config.dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
 
   *fnval_tail = ftail - ftail_cut - (r - g_config.dp_cut) * gtail_cut*g_config.dp_cut ;
-  *grad_tail = gtail - gtail_cut * g_config.dp_cut / r ;      /* returns 1/r dV/r */
+  *grad_tail = gtail - gtail_cut * g_config.dp_cut / r ;      /*  1/r dV/r */
   *ggrad_tail = 0.0;
 #ifdef DIPOLE
   *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
