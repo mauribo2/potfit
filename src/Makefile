@@ -162,7 +162,15 @@ endif
 
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC      += force_elstat.c
+    ifeq (,$(strip $(findstring csh,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+endif
+
+ifneq (,$(strip $(findstring csh,${MAKETARGET})))
+  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+    POTFITSRC      += force_csh_elstat.c
   endif
 endif
 
@@ -251,6 +259,9 @@ ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   INTERACTION = 1
   ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
     CFLAGS  += -DDSF
+  endif
+  ifneq (,$(strip $(findstring csh,${MAKETARGET})))
+    CFLAGS  += -DDSF -DCSH
   endif
 endif
 
