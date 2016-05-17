@@ -35,6 +35,10 @@
 #include "memory.h"
 #include "utils.h"
 
+#if defined(CSH)
+#define EPSILON 1.0e-20
+#endif
+
 typedef struct {
   const char* filename;
   int atom_count;
@@ -958,6 +962,9 @@ void init_neighbors(config_state* cstate, double* mindist)
             dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z +
                    iz * cstate->box_z.z;
             double r = sqrt(SPROD(dd, dd));
+#if defined(CSH)
+            r+=EPSILON;
+#endif
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[j].type;
 
@@ -1007,6 +1014,16 @@ void init_neighbors(config_state* cstate, double* mindist)
               /* pre-compute index and shift into potential table */
 
               /* pair potential */
+#if defined(CSH)
+              int col = (type1 <= type2)
+                            ? type1 * g_param.ntypes + type2 -
+                                  ((type1 * (type1 + 1)) / 2)
+                            : type2 * g_param.ntypes + type2 -
+                                  ((type2 * (type2 + 1)) / 2);
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
+
+              mindist[col] = MIN(mindist[col], r);
+#else 
               if (!short_distance) {
                 int col = (type1 <= type2)
                               ? type1 * g_param.ntypes + type2 -
@@ -1054,6 +1071,7 @@ void init_neighbors(config_state* cstate, double* mindist)
 #endif  // STIWEB
 
               } /* !sh_dist */
+#endif //CSH
             }   /* r < r_cut */
           }     /* loop over images in z direction */
         }       /* loop over images in y direction */
@@ -1085,7 +1103,12 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
         error(0, "of the potential #%d (r_begin=%f).\n", col,
               g_pot.calc_pot.begin[col]);
         fflush(stdout);
+#if defined(CSH)
+        warning("Short distance!\n");
+#else
         error(1, "Short distance!\n");
+#endif //CSH
+
       }
 
       istep = g_pot.calc_pot.invstep[col];
