@@ -524,10 +524,43 @@ void read_elstat_table(apot_state* pstate)
     apt->invar_par[apt->number + 1][0]++;
   }
   apt->sw_kappa = apt->invar_par[apt->number + 1][0];
-#if !defined(DIPOLE)
+#if !defined(DIPOLE) && !defined(CSH)
   printf(" - Read elstat table\n");
 #endif  // !DIPOLE
 #endif  // COULOMB
+
+#if defined(CSH)
+  int ncols = g_param.ntypes * (g_param.ntypes + 1) / 2;
+
+  /* read coreshell weights parameters */
+  fscanf(pstate->pfile, " %s", buffer);
+  if (strcmp("coreshell", buffer) != 0) {
+    error(1, "Could not read coreshell\n");
+  }
+  fscanf(pstate->pfile, " %s", buffer);
+  if (strcmp("coulweight", buffer) != 0) {
+    error(1, "Could not read coulweights\n");
+  }
+  for (int i = 0; i < ncols; i++) {
+    if (1 > fscanf(pstate->pfile, "%lf", &apt->cweight[i])) {
+      error(1, "Could not read coulomb weight for atomtype #%d\n", i);
+    }
+  }
+
+  /* read coreshell weights parameters */
+  fscanf(pstate->pfile, " %s", buffer);
+  if (strcmp("angbonded", buffer) != 0) {
+    error(1, "Could not read angular bonds parameters\n");
+  }
+  for (int i = 0; i < g_param.ntypes; i++) {
+    if (1 > fscanf(pstate->pfile, "%lf", &apt->angbonded[i])) {
+      error(1, "Could not read angbonded for atomtype #%d\n", i);
+    }
+  }
+
+  printf(" - Read elstat table\n");
+#endif // CSH 
+
 
 #if defined(DIPOLE)
   int ncols = g_param.ntypes * (g_param.ntypes + 1) / 2;
@@ -757,7 +790,7 @@ void read_analytic_potentials(apot_state* pstate)
     if (apot_get_num_parameters(name) == -1)
       error(1,
             "Unknown function type in file %s, please define \"%s\" in "
-            "functions.c.\n",
+            "functions.itm and functions_impl.c.\n",
             pstate->filename, name);
 
     strcpy(apt->names[i], name);

@@ -221,6 +221,10 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 
 // more potential functions for other interactions
 
+#if defined(CSH)
+  npots = g_calc.paircol + g_param.ntypes;
+#endif  // CSH
+
 #if defined(EAM)
   npots += 2 * g_param.ntypes;
 #if defined(TBEAM)
@@ -463,6 +467,10 @@ void allocate_memory_for_potentials(potential_state* pstate)
 
   apt->charge = apt->values[size];
   apt->dp_kappa = apt->values[size + 1];
+#if defined(CSH)
+  apt->cweight = (double*)Malloc(g_calc.paircol * sizeof(double));
+  apt->angbonded = (double*)Malloc(g_param.ntypes * sizeof(double));
+#endif // CSH
 #if defined(DIPOLE)
   apt->dp_alpha = apt->values[size + 2];
   apt->dp_b = apt->values[size + 3];

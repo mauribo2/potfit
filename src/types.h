@@ -297,6 +297,11 @@ typedef struct {
   double* dp_b;     /* parameter for short-range-dipole-moment */
   double* dp_c;     /* parameter for short-range-dipole-moment */
 #endif
+  
+#if defined(CSH)
+  double* cweight;    /* coulomb true or false for each pair */
+  double* angbonded;  /* types that can be part of an angular bond */
+#endif
 
 #if defined(STIWEB)
   sw_t sw;

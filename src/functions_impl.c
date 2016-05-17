@@ -273,6 +273,16 @@ void parabola_value(const double r, const double* p, double* f)
 }
 
 /****************************************************************
+  harmonic potential
+    unknown reference
+****************************************************************/
+
+void harmonic_value(const double r, const double* p, double* f)
+{
+  *f = p[0] * (r - p[1]) * (r - p[1]);
+}
+
+/****************************************************************
   chantasiriwan (csw) and milstein potential
     http://dx.doi.org/doi:10.1103/PhysRevB.53.14080
 ****************************************************************/
