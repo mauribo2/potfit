@@ -588,6 +588,7 @@ int broadcast_apot_table()
     g_pot.apot_table.ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
 #if defined(CSH)
     g_pot.apot_table.cweight = (double*)Malloc(g_calc.paircol * sizeof(double));
+    g_pot.apot_table.angbonded = (double*)Malloc(g_param.ntypes * sizeof(double));
 #endif  // CSH
 #endif  // COULOMB
     g_pot.smooth_pot = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
@@ -636,6 +637,8 @@ int broadcast_apot_table()
                          MPI_COMM_WORLD));
 #if defined(CSH)
   CHECK_RETURN(MPI_Bcast(g_pot.apot_table.cweight, g_calc.paircol, MPI_DOUBLE, 0,
+                         MPI_COMM_WORLD));
+  CHECK_RETURN(MPI_Bcast(g_pot.apot_table.angbonded, g_param.ntypes, MPI_DOUBLE, 0,
                          MPI_COMM_WORLD));
 #endif // CSH
 #endif  // COULOMB
