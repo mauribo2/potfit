@@ -492,6 +492,9 @@ int broadcast_basic_data()
 
 #if defined(COULOMB)
   CHECK_RETURN(MPI_Bcast(&g_config.dp_cut, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
+#if defined(CSH)
+  CHECK_RETURN(MPI_Bcast(&g_config.shtypes, 1, MPI_INT, 0, MPI_COMM_WORLD));
+#endif //CSH
 #endif  // COULOMB
 #if defined(DIPOLE)
   CHECK_RETURN(MPI_Bcast(&g_config.dp_tol, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));

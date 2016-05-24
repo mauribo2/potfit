@@ -221,6 +221,14 @@ void read_parameter_file(char const* param_file)
       get_param_double("dp_cut", &g_config.dp_cut, line, param_file, DBL_MIN,
                        DBL_MAX);
     }
+#if defined(CSH)
+    // number of shell types introduced 
+    else if (strcasecmp(token, "shtypes") == 0) {
+      get_param_int("shtypes", &g_config.shtypes, line, param_file, INT_MIN,
+                       INT_MAX);
+      g_param.ntypes += g_config.shtypes; 
+    }
+#endif //CSH
 #endif  // COULOMB
 
 #if defined(DIPOLE)

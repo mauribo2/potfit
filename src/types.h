@@ -394,6 +394,9 @@ typedef struct {
 // variables needed for electrostatic options
 #if defined(COULOMB)
   double dp_cut;  // cutoff-radius for long-range interactions
+#if defined(CSH)
+  int shtypes;   // number of shell types
+#endif
 #endif            // COULOMB
 #if defined(DIPOLE)
   double dp_tol;  // dipole iteration precision
