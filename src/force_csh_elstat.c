@@ -339,7 +339,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               fnval = charge[type1] * charge[type2] * fnval_tail;
               grad = charge[type1] * grad_i;
 
-	      /* supress coulomb contributin if pair is a core-shell one */
+	      /* supress coulomb contribution if pair is a core-shell one */
               if ( (int) (g_pot.apot_table.cweight[col]) == 0 ) {  /* coreshell pair */
                  if (neigh->r < g_pot.calc_pot.end[col]) {  
                      fnval -= DP_EPS * charge[type1] * charge[type2] / neigh->r;
