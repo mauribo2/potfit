@@ -231,6 +231,12 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       atom_t* atom;
       neigh_t* neigh;
 
+#if defined(DEBUG)
+      double coulener, csener, vdwener, angener;
+
+      printf("Debug information for Core-Shell potential: \n");
+      printf("Config   Ecoul    Evdw     Ecs     Eang \n") ;
+#endif // DEBUG 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
         uf = g_config.conf_uf[h - g_mpi.firstconf];
