@@ -283,6 +283,18 @@ void harmonic_value(const double r, const double* p, double* f)
 }
 
 /****************************************************************
+  angular harmonic potential
+    unknown reference
+****************************************************************/
+
+void angharmonic_value(const double r, const double* p, double* f)
+{
+  double theta = acos(r);
+
+  *f = p[0] * (theta - p[1]) * (theta - p[1]);
+}
+
+/****************************************************************
   chantasiriwan (csw) and milstein potential
     http://dx.doi.org/doi:10.1103/PhysRevB.53.14080
 ****************************************************************/

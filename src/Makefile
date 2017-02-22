@@ -150,7 +150,11 @@ POTFITSRC	+= potential_input_f5.c
 # force routines
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-  POTFITSRC	+= force_pair.c
+  ifneq (,$(strip $(findstring ang,${MAKETARGET})))
+    POTFITSRC	+= force_pair_ang.c
+  else
+    POTFITSRC	+= force_pair.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
@@ -239,7 +243,10 @@ INTERACTION = 0
 
 # pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
-  CFLAGS += -DPAIR
+    CFLAGS += -DPAIR
+  ifneq (,$(strip $(findstring ang,${MAKETARGET})))
+    CFLAGS += -DANG -DMEAM
+  endif
   INTERACTION = 1
 endif
 

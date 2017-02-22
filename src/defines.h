@@ -35,9 +35,9 @@
 #endif  // M_PI
 
 // general flag for threebody potentials (MEAM, Tersoff, SW, ...)
-#if defined(MEAM) || defined(STIWEB) || defined(TERSOFF)
+#if defined(MEAM) || defined(STIWEB) || defined(TERSOFF) || defined(ANG)
 #define THREEBODY
-#endif  // MEAM || TERSOFF || STIWEB
+#endif  // MEAM || STIWEB || TERSOFF || ANG
 
 #if defined(KIM)
 #define APOT

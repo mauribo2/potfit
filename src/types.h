@@ -113,7 +113,10 @@ typedef struct {
 #if defined(THREEBODY)
 typedef struct {
   double cos;
-#if defined(MEAM)
+#if defined(ANG)
+  double theta;
+#endif // ANG
+#if defined(MEAM) || defined (ANG)
   int slot;
   double shift;
   double step;
