@@ -103,6 +103,10 @@ typedef struct {
   double drho;
 #endif
 
+#if defined(ANG)
+  double dang;
+#endif
+
 #if defined(TERSOFF)
   vector dzeta;
 #endif

@@ -245,7 +245,7 @@ INTERACTION = 0
 ifneq (,$(findstring pair,${MAKETARGET}))
     CFLAGS += -DPAIR
   ifneq (,$(strip $(findstring ang,${MAKETARGET})))
-    CFLAGS += -DANG -DMEAM
+    CFLAGS += -DANG 
   endif
   INTERACTION = 1
 endif

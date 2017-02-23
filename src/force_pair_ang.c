@@ -1,13 +1,13 @@
 /****************************************************************
  *
- * force_meam.c: Routine used for calculating meam forces/energies
+ * force_pair_ang.c: Routine used for calculating pair and angular 
+ * interactions forces/energies
  *
  ****************************************************************
  *
  * Copyright 2002-2017 - the potfit development team
  *
- * MEAM potential: Jeremy Nicklas
- *   Ohio State University, Physics Department
+ * PAIRANG potential: Ariel Lozano
  *
  * https://www.potfit.net/
  *
@@ -120,16 +120,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   /* Some useful temp variables */
   double error_sum = 0.0;
-  double rho_sum = 0.0;
 
   /* Temp variables */
   atom_t* atom = NULL; /* atom pointer */
   int h, j, k;
   int n_i, n_j, n_k;
   int uf;
-#if defined(APOT)
-  double temp_eng;
-#endif  // APOT
+  double angener_sum;
 #if defined(STRESS)
   int us, stresses;
 #endif  // STRESS
@@ -142,14 +139,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
   double phi_val, phi_grad;
   vector tmp_force;
 
-  /* EAM variables */
-  int col_F;
-  double eam_force;
-#if !defined APOT
-  double rho_val;
-#endif  // !APOT
-
-  /* MEAM variables */
+  /* Angular derivatives variables */
   double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
   vector dfj, dfk;
   angle_t* angle;
@@ -165,17 +155,16 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       xi = xi_opt;
       break;
     case POTENTIAL_FORMAT_KIM:
-      error(1, "KIM format is not supported by MEAM force routine!");
+      error(1, "KIM format is not supported by PAIRANG force routine!");
       break;
   }
 
   /* This is the start of an infinite loop */
   while (1) {
     /* Reset tmpsum and rho_sum_loc
-       tmpsum = Sum of all the forces, energies and constraints
-       rho_sum_loc = Sum of density, rho, for all atoms */
+       error_sum = Sum of all the forces, energies and constraints
+        */
     error_sum = 0.0;
-    rho_sum = 0.0;
 
 #if defined(APOT) && !defined(MPI)
     if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC) {
@@ -208,11 +197,11 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
     /* First step is to initialize 2nd derivatives for splines */
 
-    /* Pair potential (phi), density (rho), embedding funtion (F)
-       where paircol is number of pair potential columns
+    /* Pair potential (phi)
+     * where paircol is number of pair potential columns
        and g_param.ntypes is number of rho columns
        and g_param.ntypes is number of F columns */
-    for (col = 0; col < 2 * g_calc.paircol + 3 * g_param.ntypes; col++) {
+    for (col = 0; col < 2 * g_calc.paircol + g_param.ntypes; col++) {
       /* Pointer to first entry */
       first = g_pot.calc_pot.first[col];
 
@@ -222,12 +211,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
          g_pot.calc_pot.last[col1] - first + 1 = num of spline pts
          *(xi + first - 2) = value of endpoint gradient (default: 1e30)
          *(xi + first - 1) = value of other endpoint gradient
-         (default: phi=0.0, rho=0.0, F=1e30)
+         (default: phi=0.0)
          g_pot.calc_pot.d2tab + first = array to hold 2nd deriv */
       spline_ed(g_pot.calc_pot.step[col], xi + first,
                 g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
                 *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
+
 
 #if !defined(MPI)
     g_mpi.myconf = g_config.nconf;
@@ -249,10 +239,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           forces[stresses + i] = 0.0;
 #endif  // STRESS
 
-        /* Set limiting constraints */
-        forces[g_calc.limit_p + h] = -g_config.force_0[g_calc.limit_p + h];
-
-        /* FIRST LOOP: Reset forces and densities for each atom */
+        /* FIRST LOOP: Reset forces for each atom */
         for (i = 0; i < g_config.inconf[h]; i++) {
           /* Skip every 3 spots in force array starting from position of first
            * atom */
@@ -269,9 +256,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             forces[n_i + 1] = 0.0;
             forces[n_i + 2] = 0.0;
           } /* uf */
-          /* Reset the density for each atom */
-          g_config.conf_atoms[g_config.cnfstart[h] - g_mpi.firstatom + i].rho =
-              0.0;
         } /* i */
         /* END OF FIRST LOOP */
 
@@ -333,47 +317,20 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               }
             }
 
-            /* r < cutoff */
-            /* END IF STMNT: NEIGH LIES INSIDE CUTOFF FOR PAIR POTENTIAL */
-            /* Find the correct column in the potential table for atomic
-               density, rho_ij
-               paircol = number of pair potential columns
-               Binary Alloy: paircol = 3 (3 pair potentials with index 0, 1, 2)
-               index of densitiy functions: 3 = rho_A, 4 = rho_B
-               where A, B are atom type for the neighbor */
-            /* Compute rho rho value and sum them up
-               Need to play tricks so that rho values are put in the correct
-               columns if alloy. If atom j is A or B, fn value needs to be
-               in correct rho_A or rho_B respectively, it doesn't depend on atom
-               i. */
-            /* Check that atom j lies inside rho_typ2 */
-            if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
-              /* Store gradient in the neighbor for the pair r_ij
-                 to be used in the future when computing forces
-                 and sum up rho for atom i */
-              atom->rho += splint_comb_dir(&g_pot.calc_pot, xi,
-                                           neigh_j->slot[1], neigh_j->shift[1],
-                                           neigh_j->step[1], &neigh_j->drho);
-            } else {
-              /* If the pair distance does not lie inside rho_typ2
-                 We set the grad to 0 so it doesn't sum into the net force */
-              neigh_j->drho = 0.0;
-            } /* r < cutoff */
-
             /* Compute the f_ij values and store the fn and grad in each
              * neighbor struct for easy access later */
 
             /* Find the correct column in the potential table for "f": f_ij
                For Binary Alloy: 0 = f_AA, 1 = f_AB, f_BA, 2 = f_BB
                where typ = A = 0 and typ = B = 1
-               Note: it is "paircol+2*ntypes" spots away in the array */
+               Note: it is "paircol" spots away in the array */
 
             /* Check that atom j lies inside f_col2 */
-            if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[2]]) {
+            if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
               /* Store the f(r_ij) value and the gradient for future use */
               neigh_j->f = splint_comb_dir(&g_pot.calc_pot, xi,
-                                           neigh_j->slot[2], neigh_j->shift[2],
-                                           neigh_j->step[2], &neigh_j->df);
+                                           neigh_j->slot[1], neigh_j->shift[1],
+                                           neigh_j->step[1], &neigh_j->df);
             } else {
               /* Store f and f' = 0 if doesn't lie in boundary to be used later
                * when calculating forces */
@@ -384,14 +341,15 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             /* END LOOP OVER NEIGHBORS */
           }
 
+
           /* Find the correct column in the potential table for angle part:
              g_ijk
              Binary Alloy: 0 = g_A, 1 = g_B
              where A, B are atom type for the main atom i
-             Note: it is now "2*paircol+2*ntypes" from beginning column
+             Note: it is now "2*paircol" from beginning column
              to account for
-             phi(paircol)+rho(nytpes)+F(g_param.ntypes)+f(paircol)
-             col2 = 2 * paircol + 2 * g_param.ntypes + typ1; */
+             phi(paircol)+f(paircol)
+             col2 = 2 * paircol + typ1; */
 
           /* Loop over every angle formed by neighbors
              N(N-1)/2 possible combinations
@@ -400,9 +358,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           /* set angl pointer to angl_part of current atom */
           angle = atom->angle_part;
 
+          /* set sum of angular component to zero */
+          angener_sum = 0.0;
+
           for (j = 0; j < atom->num_neigh - 1; j++) {
             /* Get pointer to neighbor jj */
             neigh_j = atom->neigh + j;
+
 
             for (k = j + 1; k < atom->num_neigh; k++) {
               /* Get pointer to neighbor kk */
@@ -413,138 +375,27 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               angle->g = splint_comb_dir(&g_pot.calc_pot, xi, angle->slot,
                                          angle->shift, angle->step, &angle->dg);
 
-              /* Sum up rho piece for atom i caused by j and k
+              /* Sum up angular contribution for atom i caused by j and k
                  f_ij * f_ik * m_ijk */
-              atom->rho += neigh_j->f * neigh_k->f * angle->g;
+              angener_sum += neigh_j->f * neigh_k->f * angle->g;
 
 #if defined(DEBUG)
-              double acontrib = neigh_j->f * neigh_k->f * angle->g;
-	      if (acontrib > 0.000000001 )  {
-                 printf("conf:%d %d %d %d  %f  %f ",  atom->conf,  neigh_j->type , atom->type, neigh_k->type, acontrib ,angle->theta*180/M_PI );
-                 printf(" idx %d %d  %d  %f  %f \n", i +1, neigh_j->nr +1 , neigh_k->nr +1, neigh_j->r , neigh_k->r  );
-	      }
+            // double acontrib = neigh_j->f * neigh_k->f * angle->g;
+	    // if (acontrib > 0.000000001 )  {
+            //    //printf("2nd round HERE HERE jty: %d %f %f ", angle->slot, angle->step, angle->shift);
+            //    printf("conf:%d %d %d %d  %f  %f ",  atom->conf,  neigh_j->type , atom->type, neigh_k->type, acontrib ,angle->theta*180/M_PI );
+            //    printf(" idx %d %d  %d  %f  %f \n", i +1, neigh_j->nr +1 , neigh_k->nr +1, neigh_j->r , neigh_k->r  );
+	    // }
 #endif 
               /* Increase angl pointer */
               angle++;
             }
           }
 
-          /* Column for embedding function, F */
-          col_F = g_calc.paircol + g_param.ntypes + atom->type;
+          forces[g_calc.energy_p + h] += angener_sum;
 
-          /* Compute energy, gradient for embedding function F
-             Check if rho lies short of inner cutoff of F(rho) */
-          if (atom->rho < g_pot.calc_pot.begin[col_F]) {
-#if defined(APOT)
-            /* calculate analytic value explicitly */
-            g_pot.apot_table.fvalue[col_F](
-                atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
-            atom->gradF =
-                apot_gradient(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
-                              g_pot.apot_table.fvalue[col_F]);
-            forces[g_calc.energy_p + h] += temp_eng;
-#else
-            /* Linear extrapolate values to left to get F_i(rho)
-               This gets value and grad of initial spline point */
-            rho_val =
-                (*g_splint_comb)(&g_pot.calc_pot, xi, col_F,
-                                 g_pot.calc_pot.begin[col_F], &atom->gradF);
-
-            /* Sum this to the total energy for this configuration
-               Linear extrapolate this energy */
-            forces[g_calc.energy_p + h] +=
-                rho_val +
-                (atom->rho - g_pot.calc_pot.begin[col_F]) * atom->gradF;
-#endif  // APOT
-            /* rho is to the right of the spline */
-          } else if (atom->rho > g_pot.calc_pot.end[col_F]) {
-#if defined(APOT)
-            /* calculate analytic value explicitly */
-            g_pot.apot_table.fvalue[col_F](
-                atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
-            atom->gradF =
-                apot_gradient(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
-                              g_pot.apot_table.fvalue[col_F]);
-            forces[g_calc.energy_p + h] += temp_eng;
-#else
-            /* Get value and grad at 1/2 the width from the final spline point
-             */
-            rho_val = (*g_splint_comb)(
-                &g_pot.calc_pot, xi, col_F,
-                g_pot.calc_pot.end[col_F] - 0.5 * g_pot.calc_pot.step[col_F],
-                &atom->gradF);
-            /* Linear extrapolate to the right to get energy */
-            forces[g_calc.energy_p + h] +=
-                rho_val + (atom->rho - g_pot.calc_pot.end[col_F]) * atom->gradF;
-#endif  // APOT
-            /* and in-between */
-          } else {
-#if defined(APOT)
-            /* calculate small values directly */
-            if (atom->rho < 0.1) {
-              g_pot.apot_table.fvalue[col_F](
-                  atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
-              atom->gradF =
-                  apot_gradient(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
-                                g_pot.apot_table.fvalue[col_F]);
-              forces[g_calc.energy_p + h] += temp_eng;
-            } else
-#endif
-              /* Get energy value from within spline and store the grad */
-              forces[g_calc.energy_p + h] += (*g_splint_comb)(
-                  &g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
-          }
-
-          /* Sum up rho for future MPI use */
-          rho_sum += atom->rho;
-
-          /* Calculate remaining forces from embedding function */
-
+          /* Compute Angular Forces */
           if (uf) {
-            /* Loop over neighbors */
-            for (j = 0; j < atom->num_neigh; ++j) {
-              /* Set pointer to temp neighbor pointer and record type */
-              neigh_j = atom->neigh + j;
-
-              /* Check that radial distance between pair is within
-                 cutoff distance of either possible rho_A or rho_B
-                 for alloys, where A or B stands for atom i
-                 WARNING: Double check this!!! May not need this
-                 since drho will be 0 otherwise */
-              if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
-                /* Calculate eam force */
-                eam_force = neigh_j->drho * atom->gradF;
-
-                /* Multiply the eamforce with x/r to get real force */
-                tmp_force.x = neigh_j->dist_r.x * eam_force;
-                tmp_force.y = neigh_j->dist_r.y * eam_force;
-                tmp_force.z = neigh_j->dist_r.z * eam_force;
-
-                /* Sum up forces acting on atom i from atom j */
-                forces[n_i + 0] += tmp_force.x;
-                forces[n_i + 1] += tmp_force.y;
-                forces[n_i + 2] += tmp_force.z;
-
-                /* Subtract off forces acting on atom j from atom i */
-                n_j = 3 * neigh_j->nr;
-                forces[n_j + 0] -= tmp_force.x;
-                forces[n_j + 1] -= tmp_force.y;
-                forces[n_j + 2] -= tmp_force.z;
-
-#if defined(STRESS)
-                if (us) {
-                  forces[stresses + 0] -= neigh_j->dist.x * tmp_force.x;
-                  forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
-                  forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
-                  forces[stresses + 3] -= neigh_j->dist.x * tmp_force.y;
-                  forces[stresses + 4] -= neigh_j->dist.y * tmp_force.z;
-                  forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
-                }
-#endif          // STRESS
-              } /* END IF STMT: Inside reach of rho cutoff */
-            }   /* END LOOP OVER NEIGHBORS */
-
-            /* Compute MEAM Forces */
             /********************************/
 
             /* Loop over every angle formed by neighbors
@@ -586,26 +437,26 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                 dfk.z = vv3k * neigh_k->dist_r.z + vlk * neigh_j->dist_r.z;
 
                 /* Force on atom i from j and k */
-                forces[n_i + 0] += atom->gradF * (dfj.x + dfk.x);
-                forces[n_i + 1] += atom->gradF * (dfj.y + dfk.y);
-                forces[n_i + 2] += atom->gradF * (dfj.z + dfk.z);
+                forces[n_i + 0] += (dfj.x + dfk.x);
+                forces[n_i + 1] += (dfj.y + dfk.y);
+                forces[n_i + 2] += (dfj.z + dfk.z);
 
                 /* Reaction force on atom j from i and k */
-                forces[n_j + 0] -= atom->gradF * dfj.x;
-                forces[n_j + 1] -= atom->gradF * dfj.y;
-                forces[n_j + 2] -= atom->gradF * dfj.z;
+                forces[n_j + 0] -= dfj.x;
+                forces[n_j + 1] -= dfj.y;
+                forces[n_j + 2] -= dfj.z;
 
                 /* Reaction force on atom k from i and j */
-                forces[n_k + 0] -= atom->gradF * dfk.x;
-                forces[n_k + 1] -= atom->gradF * dfk.y;
-                forces[n_k + 2] -= atom->gradF * dfk.z;
+                forces[n_k + 0] -= dfk.x;
+                forces[n_k + 1] -= dfk.y;
+                forces[n_k + 2] -= dfk.z;
 
 #if defined(STRESS)
                 if (us) {
                   /* Force from j on atom i */
-                  tmp_force.x = atom->gradF * dfj.x;
-                  tmp_force.y = atom->gradF * dfj.y;
-                  tmp_force.z = atom->gradF * dfj.z;
+                  tmp_force.x = dfj.x;
+                  tmp_force.y = dfj.y;
+                  tmp_force.z = dfj.z;
                   forces[stresses + 0] -= neigh_j->dist.x * tmp_force.x;
                   forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
                   forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
@@ -614,9 +465,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                   forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
 
                   /* Force from k on atom i */
-                  tmp_force.x = atom->gradF * dfk.x;
-                  tmp_force.y = atom->gradF * dfk.y;
-                  tmp_force.z = atom->gradF * dfk.z;
+                  tmp_force.x = dfk.x;
+                  tmp_force.y = dfk.y;
+                  tmp_force.z = dfk.z;
                   forces[stresses + 0] -= neigh_k->dist.x * tmp_force.x;
                   forces[stresses + 1] -= neigh_k->dist.y * tmp_force.y;
                   forces[stresses + 2] -= neigh_k->dist.z * tmp_force.z;
@@ -697,28 +548,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       error_sum += apot_punish(xi_opt, forces);
     }
 #endif  // APOT
-
-#if defined(MPI)
-    /* Reduce the rho_sum into root node */
-    double rho_sum_temp = 0.0;
-    MPI_Reduce(&rho_sum, &rho_sum_temp, 1, MPI_DOUBLE, MPI_SUM, 0,
-               MPI_COMM_WORLD);
-    if (g_mpi.myid == 0)
-      rho_sum = rho_sum_temp;
-#endif  // MPI
-
-    if (g_mpi.myid == 0) {
-      /* Calculate the average rho_sum per atom
-         NOTE: This gauge constraint exists for both EAM and MEAM */
-      rho_sum /= (double)g_config.natoms;
-
-      /* Another constraint for the gauge conditions
-         this sets the avg rho per atom to 1
-         Please read the other constraint on gauge conditions
-         above. */
-      forces[g_calc.dummy_p + g_param.ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
-      error_sum += dsquare(forces[g_calc.dummy_p + g_param.ntypes]);
-    }
 
     gather_forces(&error_sum, forces);
 

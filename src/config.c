@@ -572,7 +572,7 @@ void read_config(const char* filename)
   }
 #endif  // ADP
 
-#if defined(MEAM) && !defined(ANG)
+#if defined(MEAM)
   /* f_ij */
   for (int i = 0; i < g_calc.paircol; i++) {
     int j = g_calc.paircol + 2 * g_param.ntypes + i;
@@ -597,16 +597,16 @@ void read_config(const char* filename)
 #if defined(ANG)
   /* f_ij */
   for (int i = 0; i < g_calc.paircol; i++) {
-    int j = g_calc.paircol + 2 * g_param.ntypes + i;
+    int j = g_calc.paircol + i;
     g_pot.apot_table.begin[j] = min * 0.95;
     g_pot.opt_pot.begin[j] = min * 0.95;
     g_pot.calc_pot.begin[j] = min * 0.95;
   }
   /* g_i */
   /* g_i takes cos(theta) as an argument, so we need to tabulate it only
-     in the range of [-1:1]. Actually we use [-1.1:1.1] to be safe. */
+     in the range of [-1:1]. */
   for (int i = 0; i < g_param.ntypes; i++) {
-    int j = 2 * g_calc.paircol + 2 * g_param.ntypes + i;
+    int j = 2 * g_calc.paircol + i;
     g_pot.apot_table.begin[j] = -1.0;
     g_pot.opt_pot.begin[j] = -1.0;
     g_pot.calc_pot.begin[j] = -1.0;
@@ -646,6 +646,7 @@ void read_config(const char* filename)
 
 void update_slots(void)
 {
+
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
       double r = g_config.atoms[i].neigh[j].r;
@@ -662,10 +663,15 @@ void update_slots(void)
 #endif  // TBEAM
 #endif  // EAM || ADP || MEAM
 
-#if defined(MEAM)
+#if defined(MEAM) 
       // update slots for MEAM f functions, slot 2
       update_neighbor_slots(g_config.atoms[i].neigh + j, r, 2);
 #endif  // MEAM
+
+#if defined(ANG)
+      // update slots for angular f functions, slot 1
+      update_neighbor_slots(g_config.atoms[i].neigh + j, r, 1);
+#endif
 
 #if defined(ADP)
       // update slots for adp dipole functions, slot 2
@@ -677,7 +683,7 @@ void update_slots(void)
     }  // end loop over all neighbors
   }    // end loop over all atoms
 
-#if defined(THREEBODY) && defined(MEAM) && !defined(ANG)
+#if defined(THREEBODY) && defined(MEAM)
   // update angular slots
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_angles; j++) {
@@ -701,8 +707,7 @@ void update_slots(void)
   // update angular slots
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_angles; j++) {
-      int col =
-          2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+      int col = 2 * g_calc.paircol + g_config.atoms[i].type;
       //double rr = g_config.atoms[i].angle_part[j].theta - g_pot.calc_pot.begin[col];
       double rr = g_config.atoms[i].angle_part[j].cos - g_pot.calc_pot.begin[col];
       g_config.atoms[i].angle_part[j].slot =
@@ -1129,6 +1134,12 @@ void init_neighbors(config_state* cstate, double* mindist)
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
 #endif  // MEAM
 
+#if defined(ANG)
+                /* Store slots and stuff for f(r_ij) */
+                col = g_calc.paircol + g_config.atoms[i].neigh[k].col[0];
+                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
+#endif  // ANG
+
 #if defined(ADP)
                 /* dipole part */
                 col = g_calc.paircol + 2 * g_param.ntypes +
@@ -1266,13 +1277,14 @@ void init_angles(config_state* cstate)
                           g_config.atoms[i].neigh[k].dist_r.z;
 
         g_config.atoms[i].angle_part[ijk].cos = ccos;
-        g_config.atoms[i].angle_part[ijk].theta = acos(ccos);
 
-//	if ( g_config.atoms[i].type == 3  )
- //       printf("conf:%d  %d %d %d  %f \n ", g_config.atoms[i].conf,g_config.atoms[i].neigh[j].type , g_config.atoms[i].type,  g_config.atoms[i].neigh[k].type , g_config.atoms[i].angle_part[ijk].theta*180/M_PI );
-
+#if defined(MEAM)
         int col =
             2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+#elif defined(ANG)
+        g_config.atoms[i].angle_part[ijk].theta = acos(ccos);
+        int col = 2 * g_calc.paircol + g_param.ntypes + g_config.atoms[i].type;
+#endif
 
         if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
             g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST) {
@@ -1284,7 +1296,7 @@ void init_angles(config_state* cstate)
             fflush(stdout);
             error(1, "cos out of range, it is strange!\n");
           }
-#if defined(MEAM)
+#if defined(MEAM) || defined(ANG)
           double istep = g_pot.calc_pot.invstep[col];
           int slot = (int)((ccos + 1) * istep);
           double shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
@@ -1297,7 +1309,7 @@ void init_angles(config_state* cstate)
             slot--;
             shift += 1.0;
           }
-#endif  // MEAM
+#endif  // MEAM || ANG
         }
 #if defined(MEAM)
 // TODO: how did this ever work ???
