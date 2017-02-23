@@ -218,6 +218,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                 *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
 
+#if defined(DEBUG)
+              printf("Forces components for each atom:\n  conf      at        type        f.x    f.y    f.z \n" );
+#endif  // DEBUG
 
 #if !defined(MPI)
     g_mpi.myconf = g_config.nconf;
@@ -379,14 +382,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                  f_ij * f_ik * m_ijk */
               angener_sum += neigh_j->f * neigh_k->f * angle->g;
 
-#if defined(DEBUG)
-            // double acontrib = neigh_j->f * neigh_k->f * angle->g;
-	    // if (acontrib > 0.000000001 )  {
-            //    //printf("2nd round HERE HERE jty: %d %f %f ", angle->slot, angle->step, angle->shift);
-            //    printf("conf:%d %d %d %d  %f  %f ",  atom->conf,  neigh_j->type , atom->type, neigh_k->type, acontrib ,angle->theta*180/M_PI );
-            //    printf(" idx %d %d  %d  %f  %f \n", i +1, neigh_j->nr +1 , neigh_k->nr +1, neigh_j->r , neigh_k->r  );
-	    // }
-#endif 
               /* Increase angl pointer */
               angle++;
             }
@@ -491,8 +486,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
 #if defined(DEBUG)
-              printf(" conf:%d  %d  %d    f:  %f  %f  %f \n " , 
-                     atom->conf, i, 
+              printf(" %d  %d  %d      %f     %f     %f \n " , 
+                     atom->conf, 
+		     i, 
                      atom->type,
                      forces[n_i + 0] + g_config.force_0[n_i + 0],
                      forces[n_i + 1] + g_config.force_0[n_i + 1],

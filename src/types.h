@@ -103,10 +103,6 @@ typedef struct {
   double drho;
 #endif
 
-#if defined(ANG)
-  double dang;
-#endif
-
 #if defined(TERSOFF)
   vector dzeta;
 #endif
@@ -126,7 +122,7 @@ typedef struct {
   double step;
   double g;
   double dg;
-#endif  // MEAM
+#endif  // MEAM || ANG
 } angle_t;
 #endif  // THREEBODY
 

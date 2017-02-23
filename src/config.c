@@ -1296,7 +1296,7 @@ void init_angles(config_state* cstate)
             fflush(stdout);
             error(1, "cos out of range, it is strange!\n");
           }
-#if defined(MEAM) || defined(ANG)
+#if defined(MEAM)
           double istep = g_pot.calc_pot.invstep[col];
           int slot = (int)((ccos + 1) * istep);
           double shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
@@ -1309,7 +1309,7 @@ void init_angles(config_state* cstate)
             slot--;
             shift += 1.0;
           }
-#endif  // MEAM || ANG
+#endif  // MEAM
         }
 #if defined(MEAM)
 // TODO: how did this ever work ???
