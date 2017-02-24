@@ -534,6 +534,29 @@ void read_elstat_table(apot_state* pstate)
 #endif  // !DIPOLE
 #endif  // COULOMB
 
+#if defined(CSH)
+  fsetpos(pstate->pfile, &pstate->startpos);
+  /* skip to coreshell section */
+  do {
+    fgetpos(pstate->pfile, &filepos);
+    fscanf(pstate->pfile, "%s", buffer);
+  } while (strcmp(buffer, "coreshell") != 0 && !feof(pstate->pfile));
+  /* check for coreshell keyword */
+  if (strcmp("coreshell", buffer) != 0) {
+    error(1, "No coreshell option found in %s.\n", pstate->filename);
+  }
+  fscanf(pstate->pfile, " %s", buffer);
+  /* read coulomb weights */
+  if (strcmp("coulweight", buffer) != 0) {
+    error(1, "Could not read coulweight for coreshell pairs\n");
+  }
+  for (int i = 0; i < g_calc.paircol; i++) {
+    if (1 > fscanf(pstate->pfile, "%d", &apt->cweight[i])) {
+      error(1, "Could not read coulweight for pair #%d\n", i);
+    }
+  }
+#endif // CSH
+
 #if defined(DIPOLE)
   int ncols = g_param.ntypes * (g_param.ntypes + 1) / 2;
 

@@ -425,6 +425,9 @@ void allocate_memory_for_potentials(potential_state* pstate)
 
 #else  // !COULOMB
   apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
+#if defined(CSH)
+  apt->cweight = (int*)Malloc(g_calc.paircol * sizeof(int));
+#endif
   apt->values = (double**)Malloc((size + 5) * sizeof(double*));
   apt->param_name = (char***)Malloc((size + 5) * sizeof(char**));
   apt->pmin = (double**)Malloc((size + 5) * sizeof(double*));

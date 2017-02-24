@@ -295,6 +295,9 @@ typedef struct {
                          neutrality */
   double* dp_kappa;   /* parameter kappa */
   int sw_kappa;       /* switch for kappa-optimization */
+#if defined(CSH)
+  int* cweight;      /* switch for coulomb interaction of pairs */
+#endif
 #endif
 #if defined(DIPOLE)
   double* dp_alpha; /* polarisability */

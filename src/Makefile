@@ -152,7 +152,11 @@ POTFITSRC	+= potential_input_f5.c
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
   ifneq (,$(strip $(findstring ang,${MAKETARGET})))
     ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-      POTFITSRC	+= force_pair_ang_elstat.c
+      ifneq (,$(strip $(findstring csh,${MAKETARGET})))
+        POTFITSRC	+= force_pairang_elstat_csh.c
+      else
+        POTFITSRC	+= force_pairang_elstat.c
+      endif
     else
       POTFITSRC	+= force_pair_ang.c
     endif
@@ -252,6 +256,9 @@ ifneq (,$(findstring pair,${MAKETARGET}))
     CFLAGS += -DPAIR
   ifneq (,$(strip $(findstring ang,${MAKETARGET})))
     CFLAGS += -DANG 
+    ifneq (,$(strip $(findstring csh,${MAKETARGET})))
+      CFLAGS += -DCSH
+    endif
   endif
   INTERACTION = 1
 endif
