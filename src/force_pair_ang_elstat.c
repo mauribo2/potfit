@@ -390,9 +390,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               forces[g_calc.energy_p + h] += 0.5 * fnval;
 
               if (uf) {
-                tmp_force.x = neigh_j->dist.x * grad;
-                tmp_force.y = neigh_j->dist.y * grad;
-                tmp_force.z = neigh_j->dist.z * grad;
+                tmp_force.x = 0.5 * neigh_j->dist.x * grad;
+                tmp_force.y = 0.5 * neigh_j->dist.y * grad;
+                tmp_force.z = 0.5 * neigh_j->dist.z * grad;
                 forces[n_i + 0] += tmp_force.x;
                 forces[n_i + 1] += tmp_force.y;
                 forces[n_i + 2] += tmp_force.z;
@@ -603,6 +603,15 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             forces[n_i + 1] /= FORCE_EPS + atom->absforce;
             forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif  // FWEIGHT
+#if defined(DEBUG)
+            printf(" %d  %d  %d      %f     %f     %f \n " ,
+                     atom->conf,                                            
+                      i,
+                      atom->type,
+	              forces[n_i + 0] + g_config.force_0[n_i + 0],
+	              forces[n_i + 1] + g_config.force_0[n_i + 1],
+	              forces[n_i + 2] + g_config.force_0[n_i + 2]);
+#endif  // DEBUG
 #if defined(CONTRIB)
             if (atom->contrib)
 #endif  // CONTRIB
