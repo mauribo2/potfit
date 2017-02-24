@@ -30,8 +30,8 @@
  *
  ****************************************************************/
 
-#if !defined(ANG)
-#error force_pair_ang.c compiled without ANG support
+#if !defined(ANG) ||  !defined(COULOMB)
+#error force_pair_ang_elstat.c compiled without ANG or COULOMB support
 #endif
 
 #include "potfit.h"
@@ -57,7 +57,10 @@
 
 void init_force(int is_worker)
 {
-  // nothing to do here for pairang potentials
+#if defined(COULOMB)
+  if (g_pot.apot_table.sw_kappa)  // FIXME is sw_kappa really correct here?
+    init_tails(g_pot.apot_table.dp_kappa[0]);
+#endif  // COULOMB
 }
 
 /****************************************************************
@@ -117,6 +120,16 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   /* Some useful temp variables */
   double error_sum = 0.0;
+  int ne = 0;
+  int size = 0;
+  double charge[g_param.ntypes];
+  double sum_charges;
+  double dp_kappa;
+  apot_table_t* apt = &g_pot.apot_table;
+  int self;
+  double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j;
+  int type1, type2;
+
 
   /* Temp variables */
   atom_t* atom = NULL; /* atom pointer */
@@ -152,9 +165,12 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       xi = xi_opt;
       break;
     case POTENTIAL_FORMAT_KIM:
-      error(1, "KIM format is not supported by PAIRANG force routine!");
+      error(1, "KIM format is not supported by PAIRANG elstat force routine!");
       break;
   }
+
+  ne = g_pot.apot_table.total_ne_par;
+  size = g_pot.apot_table.number;
 
   /* This is the start of an infinite loop */
   while (1) {
@@ -192,6 +208,24 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 #endif  // APOT
 #endif  // MPI
 
+    /* local arrays for electrostatic parameters */
+    sum_charges = 0;
+    for (i = 0; i < g_param.ntypes - 1; i++) {
+      if (xi_opt[2 * size + ne + i]) {
+        charge[i] = xi_opt[2 * size + ne + i];
+        sum_charges += apt->ratio[i] * charge[i];
+      } else {
+        charge[i] = 0.0;
+      }
+    }
+    apt->last_charge = -sum_charges / apt->ratio[g_param.ntypes - 1];
+    charge[g_param.ntypes - 1] = apt->last_charge;
+    if (xi_opt[2 * size + ne + g_param.ntypes - 1]) {
+      dp_kappa = xi_opt[2 * size + ne + g_param.ntypes - 1];
+    } else {
+      dp_kappa = 0.0;
+    }
+
     /* First step is to initialize 2nd derivatives for splines */
 
     /* Pair potential (phi)
@@ -212,6 +246,10 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                 g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
                 *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
+
+#if defined(DEBUG)
+              printf("Forces components for each atom:\n  conf      at        type        f.x    f.y    f.z \n" );
+#endif  // DEBUG
 
 #if !defined(MPI)
     g_mpi.myconf = g_config.nconf;
@@ -253,17 +291,20 @@ double calc_forces(double* xi_opt, double* forces, int flag)
         } /* i */
         /* END OF FIRST LOOP */
 
-        /* SECOND LOOP: Calculate pair forces and energies, atomic densities */
+        /* SECOND LOOP: Calculate pair and monopole forces and energies */
         for (i = 0; i < g_config.inconf[h]; i++) {
           /* Set pointer to temp atom pointer */
           atom = g_config.conf_atoms +
                  (g_config.cnfstart[h] - g_mpi.firstatom + i);
           /* Skip every 3 spots for force array */
           n_i = 3 * (g_config.cnfstart[h] + i);
+          type1 = atom->type;
           /* Loop over neighbors */
           for (j = 0; j < atom->num_neigh; j++) {
             /* Set pointer to temp neighbor pointer */
             neigh_j = atom->neigh + j;
+            type2 = neigh_j->type;
+
             /* Find the correct column in the potential table for pair
                potential: phi_ij
                For Binary Alloy: 0 = phi_AA, 1 = (phi_AB or phi_BA), 2 = phi_BB
@@ -311,6 +352,69 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               }
             }
 
+            /* calculate monopole forces */
+            /* updating tail-functions - only necessary with variing kappa */
+            if (!apt->sw_kappa)
+#if defined(DSF)
+            elstat_dsf(neigh_j->r, dp_kappa, &neigh_j->fnval_el,
+                            &neigh_j->grad_el, &neigh_j->ggrad_el);
+#else
+            elstat_shift(neigh_j->r, dp_kappa, &neigh_j->fnval_el,
+                           &neigh_j->grad_el, &neigh_j->ggrad_el);
+#endif // DSF
+
+            /* In small cells, an atom might interact with itself */
+            self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
+
+            if (neigh_j->r < g_config.dp_cut &&
+                (charge[type1] || charge[type2])) {
+              fnval_tail = neigh_j->fnval_el;
+              grad_tail = neigh_j->grad_el;
+
+              grad_i = charge[type2] * grad_tail;
+              if (type1 == type2) {
+                grad_j = grad_i;
+              } else {
+                grad_j = charge[type1] * grad_tail;
+              }
+              fnval = charge[type1] * charge[type2] * fnval_tail;
+              grad = charge[type1] * grad_i;
+
+              if (self) {
+                grad_i *= 0.5;
+                grad_j *= 0.5;
+                fnval *= 0.5;
+                grad *= 0.5;
+              }
+
+              forces[g_calc.energy_p + h] += 0.5 * fnval;
+
+              if (uf) {
+                tmp_force.x = neigh_j->dist.x * grad;
+                tmp_force.y = neigh_j->dist.y * grad;
+                tmp_force.z = neigh_j->dist.z * grad;
+                forces[n_i + 0] += tmp_force.x;
+                forces[n_i + 1] += tmp_force.y;
+                forces[n_i + 2] += tmp_force.z;
+                /* actio = reactio */
+                n_j = 3 * neigh_j->nr;
+                forces[n_j + 0] -= tmp_force.x;
+                forces[n_j + 1] -= tmp_force.y;
+                forces[n_j + 2] -= tmp_force.z;
+#if defined(STRESS)
+                /* calculate coulomb stresses */
+                if (us) {
+                  forces[stresses + 0] -= neigh_j->dist.x * tmp_force.x;
+                  forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
+                  forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
+                  forces[stresses + 3] -= neigh_j->dist.x * tmp_force.y;
+                  forces[stresses + 4] -= neigh_j->dist.y * tmp_force.z;
+                  forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
+                }
+#endif  // STRESS
+              }
+             }
+
             /* Compute the f_ij values and store the fn and grad in each
              * neighbor struct for easy access later */
 
@@ -331,9 +435,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               neigh_j->f = 0.0;
               neigh_j->df = 0.0;
             }
-
-            /* END LOOP OVER NEIGHBORS */
-          }
+          } /* END LOOP OVER NEIGHBORS */
 
 
           /* Find the correct column in the potential table for angle part:
@@ -466,29 +568,49 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               } /* End inner loop over angles (neighbor atom k) */
             }   /* End outer loop over angles (neighbor atom j) */
           }     /* uf */
-        }       /* END OF SECOND LOOP OVER ATOM i */
+        } /* END OF SECOND LOOP OVER ATOM i */
 
-        /* 3RD LOOP OVER ATOM i */
-        /* Sum up the square of the forces for each atom
-           then multiply it by the weight for this config */
-        for (i = 0; i < g_config.inconf[h]; i++) {
+
+        /* THIRD loop: self energy contributions and sum-up force
+         * contributions */
+        double qq;
+#if defined(DSF)
+        double fnval_cut, gtail_cut, ggrad_cut;
+        elstat_value(g_config.dp_cut, dp_kappa, &fnval_cut, &gtail_cut, &ggrad_cut);
+#endif // DSF
+        for (i = 0; i < g_config.inconf[h]; i++) { /* atoms */
           atom =
               g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
-#if defined(FWEIGHT)
-          /* Weigh by absolute value of force */
-          forces[n_i + 0] /= FORCE_EPS + atom->absforce;
-          forces[n_i + 1] /= FORCE_EPS + atom->absforce;
-          forces[n_i + 2] /= FORCE_EPS + atom->absforce;
-#endif  // FWEIGHT
+          type1 = atom->type;
 
+          /* self energy contributions */
+          if (charge[type1]) {
+            qq = charge[type1] * charge[type1];
+#if defined(DSF)
+            fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
+              (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
+#else
+            fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
+#endif // DSF
+            forces[g_calc.energy_p + h] -= fnval;
+          }
+          /* sum-up: whole force contributions flow into tmpsum */
+          if (uf) {
+#if defined(FWEIGHT)
+            /* Weigh by absolute value of force */
+            forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+            forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+            forces[n_i + 2] /= FORCE_EPS + atom->absforce;
+#endif  // FWEIGHT
 #if defined(CONTRIB)
-          if (atom->contrib)
+            if (atom->contrib)
 #endif  // CONTRIB
             error_sum += g_config.conf_weight[h] *
-                         (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) +
-                          dsquare(forces[n_i + 2]));
-        } /* END OF THIRD LOOP OVER ATOM i */
+                        (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) +
+                         dsquare(forces[n_i + 2]));
+          }
+        } /* end THIRD loop over atoms */
 
         /* Add in the energy per atom and its weight to the sum */
         /* First divide by num atoms */
@@ -514,9 +636,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                        dsquare(forces[stresses + i]);
         }
 #endif  // STRESS
-
+       }
       } /* END MAIN LOOP OVER CONFIGURATIONS */
-    }
 
 /* dummy constraints (global) */
 #if defined(APOT)

@@ -151,7 +151,11 @@ POTFITSRC	+= potential_input_f5.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
   ifneq (,$(strip $(findstring ang,${MAKETARGET})))
-    POTFITSRC	+= force_pair_ang.c
+    ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+      POTFITSRC	+= force_pair_ang_elstat.c
+    else
+      POTFITSRC	+= force_pair_ang.c
+    endif
   else
     POTFITSRC	+= force_pair.c
   endif
@@ -170,8 +174,10 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 endif
 
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC	+= force_elstat.c
+  ifeq (,$(strip $(findstring ang,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC	+= force_elstat.c
+    endif
   endif
 endif
 
@@ -267,9 +273,11 @@ endif
 
 # COULOMB
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    ifneq (,$(findstring 1,${INTERACTION}))
-      ERROR += "More than one potential model specified!\n"
+  ifeq (,$(strip $(findstring ang,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      ifneq (,$(findstring 1,${INTERACTION}))
+        ERROR += "More than one potential model specified!\n"
+      endif
     endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
