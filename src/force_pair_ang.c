@@ -215,10 +215,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                 *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
 
-#if defined(DEBUG)
-              printf("Forces components for each atom:\n  conf      at        type        f.x    f.y    f.z \n" );
-#endif  // DEBUG
-
 #if !defined(MPI)
     g_mpi.myconf = g_config.nconf;
 #endif  // !MPI
@@ -481,15 +477,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           atom =
               g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
-#if defined(DEBUG)
-              printf(" %d  %d  %d      %f     %f     %f \n " , 
-                     atom->conf, 
-		     i, 
-                     atom->type,
-                     forces[n_i + 0] + g_config.force_0[n_i + 0],
-                     forces[n_i + 1] + g_config.force_0[n_i + 1],
-                     forces[n_i + 2] + g_config.force_0[n_i + 2]);
-#endif  // DEBUG
 #if defined(FWEIGHT)
           /* Weigh by absolute value of force */
           forces[n_i + 0] /= FORCE_EPS + atom->absforce;
