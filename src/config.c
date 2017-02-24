@@ -1282,10 +1282,8 @@ void init_angles(config_state* cstate)
         int col =
             2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
 #elif defined(ANG)
-        g_config.atoms[i].angle_part[ijk].theta = acos(ccos);
-        int col = 2 * g_calc.paircol + g_param.ntypes + g_config.atoms[i].type;
-#endif
-
+        int col = 4 * g_calc.paircol + g_param.ntypes + g_config.atoms[i].type;
+#endif // MEAM
         if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
             g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST) {
           if ((fabs(ccos) - 1.0) > 1e-10) {
@@ -1296,6 +1294,18 @@ void init_angles(config_state* cstate)
             fflush(stdout);
             error(1, "cos out of range, it is strange!\n");
           }
+
+#if defined(ANG)
+	/* to be safe in the case fp issues might return slightly highe value */
+        if (ccos > 1.0) {
+          ccos = 1.0;
+        }
+	else if (ccos < -1.0) {
+          ccos = -1.0;
+        }
+        g_config.atoms[i].angle_part[ijk].theta = acos(ccos);
+#endif // ANG
+
 #if defined(MEAM)
           double istep = g_pot.calc_pot.invstep[col];
           int slot = (int)((ccos + 1) * istep);
