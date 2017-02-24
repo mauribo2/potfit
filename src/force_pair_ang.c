@@ -57,10 +57,7 @@
 
 void init_force(int is_worker)
 {
-#if !defined(APOT)
-  // set spline density corrections to 0
-  g_calc.lambda = (double*)Malloc(g_param.ntypes * sizeof(double));
-#endif  // APOT
+  // nothing to do here for pairang potentials
 }
 
 /****************************************************************
@@ -367,7 +364,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           for (j = 0; j < atom->num_neigh - 1; j++) {
             /* Get pointer to neighbor jj */
             neigh_j = atom->neigh + j;
-
 
             for (k = j + 1; k < atom->num_neigh; k++) {
               /* Get pointer to neighbor kk */
