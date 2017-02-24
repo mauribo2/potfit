@@ -646,7 +646,6 @@ void read_config(const char* filename)
 
 void update_slots(void)
 {
-
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
       double r = g_config.atoms[i].neigh[j].r;
@@ -663,7 +662,7 @@ void update_slots(void)
 #endif  // TBEAM
 #endif  // EAM || ADP || MEAM
 
-#if defined(MEAM) 
+#if defined(MEAM)
       // update slots for MEAM f functions, slot 2
       update_neighbor_slots(g_config.atoms[i].neigh + j, r, 2);
 #endif  // MEAM
@@ -671,7 +670,7 @@ void update_slots(void)
 #if defined(ANG)
       // update slots for angular f functions, slot 1
       update_neighbor_slots(g_config.atoms[i].neigh + j, r, 1);
-#endif
+#endif // ANG
 
 #if defined(ADP)
       // update slots for adp dipole functions, slot 2
