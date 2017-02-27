@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * force_pairang_elstat_csh.c: Routine used for calculating pair 
+ * force_pairang_elstat_csh.c: Routine used for calculating pair
  * and angular interactions forces/energies with coreshell switch
  *
  ****************************************************************

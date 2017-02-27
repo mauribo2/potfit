@@ -604,7 +604,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 #endif  // FWEIGHT
 #if defined(DEBUG)
             printf(" %d  %d  %d      %f     %f     %f \n " ,
-                     atom->conf,                                            
+                     atom->conf,
                       i,
                       atom->type,
 	              forces[n_i + 0] + g_config.force_0[n_i + 0],
