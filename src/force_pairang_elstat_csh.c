@@ -247,7 +247,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
     }
 
 #if defined(DEBUG)
-              printf("Forces components for each atom:\n  conf      at        type        f.x    f.y    f.z \n" );
+              //printf("Forces components for each atom:\n  conf      at        type        f.x    f.y    f.z \n" );
+              double acontrib;
 #endif  // DEBUG
 
 #if !defined(MPI)
@@ -483,6 +484,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                  f_ij * f_ik * m_ijk */
               angener_sum += neigh_j->f * neigh_k->f * angle->g;
 
+#if defined(DEBUG)
+              acontrib = neigh_j->f * neigh_k->f * angle->g;
+	      if (acontrib > 0.000000001 )  {
+                 printf("conf:%d  int: %d %d %d   %f  %f \n",  atom->conf,  neigh_j->type , atom->type, neigh_k->type, acontrib , angle->theta*180/M_PI );
+                 //printf(" idx %d %d  %d  %f  %f \n", i +1, neigh_j->nr +1 , neigh_k->nr +1, neigh_j->r , neigh_k->r  );
+	      }
+#endif
               /* Increase angl pointer */
               angle++;
             }
