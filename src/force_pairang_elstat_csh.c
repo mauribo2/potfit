@@ -7,7 +7,7 @@
  *
  * Copyright 2002-2017 - the potfit development team
  *
- * PAIRANG elstat potential: Ariel Lozano
+ * PAIRANG elstat with CSH switch potential: Ariel Lozano
  *
  * https://www.potfit.net/
  *
@@ -30,8 +30,8 @@
  *
  ****************************************************************/
 
-#if !defined(ANG) ||  !defined(COULOMB)
-#error force_pair_ang_elstat.c compiled without ANG or COULOMB support
+#if !defined(ANG) ||  !defined(COULOMB) !! !defined(CSH)
+#error force_pairang_elstat_csh.c compiled without ANG, COULOMB or CSH support
 #endif
 
 #include "potfit.h"
@@ -173,7 +173,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-    /* Reset tmpsum and rho_sum_loc
+    /* Reset
        error_sum = Sum of all the forces, energies and constraints
         */
     error_sum = 0.0;

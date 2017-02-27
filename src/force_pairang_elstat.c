@@ -173,7 +173,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-    /* Reset tmpsum and rho_sum_loc
+    /* Reset
        error_sum = Sum of all the forces, energies and constraints
         */
     error_sum = 0.0;
@@ -644,8 +644,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                        dsquare(forces[stresses + i]);
         }
 #endif  // STRESS
-       }
-      } /* END MAIN LOOP OVER CONFIGURATIONS */
+      }
+    } /* END MAIN LOOP OVER CONFIGURATIONS */
 
 /* dummy constraints (global) */
 #if defined(APOT)
