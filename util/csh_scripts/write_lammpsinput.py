@@ -119,8 +119,9 @@ for i in range(csi):
     str_bond = str_bond + 'bond_coeff {0}  {1}  {2}\n'.format(i+1,cs[i][0],cs[i][1]) 
 
 str_angle = 'angle_style harmonic\n'
-for i in range(angi):
-    str_angle = str_angle + 'angle_coeff  {0}  {1}  {2}\n'.format(i+1,ang[i][0],ang[i][1]*57.29577951) 
+if angle>0:
+	for i in range(angi):
+    	    str_angle = str_angle + 'angle_coeff  {0}  {1}  {2}\n'.format(i+1,ang[i][0],ang[i][1]*57.29577951) 
 
 string = ''
 

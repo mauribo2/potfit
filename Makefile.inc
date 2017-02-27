@@ -204,12 +204,13 @@ ifeq (x86_64-gcc,${SYSTEM})
   # profiling and debug flags
   PROF_FLAGS    += -m64 -g3 -pg
   PROF_LIBS     += -m64 -g3 -pg
-  DEBUG_FLAGS   += -m64 -g3 -Wall -Werror -pedantic -std=c99
+  DEBUG_FLAGS   += -m64 -g3 -Wall -pedantic -std=c99
   ASAN_FLAGS    += -g -fsanitize=address -fno-omit-frame-pointer
   ASAN_LFLAGS   = -g -fsanitize=address
 
 ifeq (${MATH_LIB},__ACCELERATE__)
   OPT_FLAGS    += -Wa,-q
+  DEBUG_FLAGS    += -Wa,-q
   LIBS += -framework Accelerate 
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
