@@ -30,7 +30,7 @@
  *
  ****************************************************************/
 
-#if !defined(ANG) ||  !defined(COULOMB) !! !defined(CSH)
+#if !defined(ANG) ||  !defined(COULOMB) || !defined(CSH)
 #error force_pairang_elstat_csh.c compiled without ANG, COULOMB or CSH support
 #endif
 
