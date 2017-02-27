@@ -1,7 +1,7 @@
 /****************************************************************
  *
- * force_pair_ang.c: Routine used for calculating pair and angular 
- * interactions forces/energies
+ * force_pairang_elstat_csh.c: Routine used for calculating pair 
+ * and angular interactions forces/energies with coreshell switch
  *
  ****************************************************************
  *
@@ -379,11 +379,11 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               fnval = charge[type1] * charge[type2] * fnval_tail;
               grad = charge[type1] * grad_i;
 
-	      /* check if pair is a core-shell one 
+	      /* check if pair is a core-shell one
 	         and suppress coulomb contribution */
               if ( g_pot.apot_table.cweight[neigh_j->col[0]] == 0 ) {
-                if ( neigh_j->r <= g_pot.calc_pot.end[neigh_j->col[0]] ) {   
-                  fnval -= DP_EPS * charge[type1] * charge[type2] * 
+                if ( neigh_j->r <= g_pot.calc_pot.end[neigh_j->col[0]] ) {
+                  fnval -= DP_EPS * charge[type1] * charge[type2] *
 			   neigh_j->inv_r;
                   grad=0;
                 }
@@ -614,7 +614,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 #endif  // FWEIGHT
 #if defined(DEBUG)
             printf(" %d  %d  %d      %f     %f     %f \n " ,
-                     atom->conf,                                            
+                     atom->conf,
                       i,
                       atom->type,
 	              forces[n_i + 0] + g_config.force_0[n_i + 0],

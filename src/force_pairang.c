@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * force_pair_ang.c: Routine used for calculating pair and angular 
+ * force_pairang.c: Routine used for calculating pair and angular
  * interactions forces/energies
  *
  ****************************************************************

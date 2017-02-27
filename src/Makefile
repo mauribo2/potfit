@@ -158,7 +158,7 @@ ifneq (,$(strip $(findstring pair,${MAKETARGET})))
         POTFITSRC	+= force_pairang_elstat.c
       endif
     else
-      POTFITSRC	+= force_pair_ang.c
+      POTFITSRC	+= force_pairang.c
     endif
   else
     POTFITSRC	+= force_pair.c
@@ -255,7 +255,7 @@ INTERACTION = 0
 ifneq (,$(findstring pair,${MAKETARGET}))
     CFLAGS += -DPAIR
   ifneq (,$(strip $(findstring ang,${MAKETARGET})))
-    CFLAGS += -DANG 
+    CFLAGS += -DANG
     ifneq (,$(strip $(findstring csh,${MAKETARGET})))
       CFLAGS += -DCSH
     endif
