@@ -325,7 +325,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
       fprintf(outfile, " %s", elements[i]);
 #endif /* TBEAM */
 #endif /* EAM || MEAM */
-#ifdef MEAM || ANG
+#if defined MEAM || defined ANG
     /* pre-anglpart */
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)

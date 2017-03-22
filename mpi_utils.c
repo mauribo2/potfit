@@ -192,7 +192,7 @@ void broadcast_params()
   /* *INDENT-OFF* */
   size = 0;
   blklens[size] = 1; 		typen[size++] = MPI_DOUBLE;    	/* cos */
-#ifdef MEAM || ANG
+#if defined MEAM || defined ANG
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* slot */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* shift */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* step */
@@ -202,7 +202,7 @@ void broadcast_params()
 
   count = 0;
   MPI_Address(&testangl.cos, 		&displs[count++]);
-#ifdef MEAM || ANG
+#if defined MEAM || defined ANG
   MPI_Address(&testangl.slot, 		&displs[count++]);
   MPI_Address(&testangl.shift, 		&displs[count++]);
   MPI_Address(&testangl.step, 		&displs[count++]);

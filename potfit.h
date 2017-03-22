@@ -392,6 +392,11 @@ void  set_force_vector_pointers();
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 EXTERN const char interaction_name[5] INIT("PAIR");
+#elif defined ANG && !defined COULOMB
+EXTERN const char interaction_name[8] INIT("PAIRANG");
+#if defined ANG && defined COULOMB
+  init_interaction_name("PAIRANG_ELSTAT");
+#endif // COULOMB ANG
 #elif defined EAM && !defined COULOMB
 #ifndef TBEAM
 EXTERN const char interaction_name[4] INIT("EAM");

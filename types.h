@@ -96,7 +96,7 @@ typedef struct {
 #ifdef THREEBODY
 typedef struct {
   double cos;
-#ifdef MEAM || ANG
+#if defined MEAM || defined ANG
   int   slot;
   double shift;
   double step;
