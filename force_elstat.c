@@ -31,7 +31,7 @@
 
 #include "potfit.h"
 
-#if defined COULOMB && !defined EAM
+#if defined COULOMB && !defined EAM && !defined ANG
 
 #include "functions.h"
 #include "potential.h"
