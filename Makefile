@@ -550,6 +550,9 @@ ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
       ERROR += More than one potential model specified
     endif
   endif
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+    ERROR += DIPOLE and DSF are not currently compatible
+  endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += DIPOLE does not support tabulated potentials
   endif
