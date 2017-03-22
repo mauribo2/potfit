@@ -1220,13 +1220,13 @@ void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, doubl
   x[3] = exp(-x[0] * x[1]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = -(*ftail + x[2] * x[3]) / x[0];
-  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];                /* 1/r df/dr */
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0]; /* 1/r dg/dr */
 }
 
 /****************************************************************
  *
- * shifted tail of coloumb potential
+ * shifted tail of coulomb potential
  *
  ****************************************************************/
 
@@ -1252,6 +1252,34 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
 #endif /* DIPOLE */
 }
 
+/***************************************************************
+ *
+ * damped shifted force Coulomb potential
+ * http://dx.doi.org/10.1063/1.2206581
+ *
+ ****************************************************************/
+
+#ifdef DSF
+void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
+		double *grad_tail, double *ggrad_tail)
+{
+  static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
+  static double x[3];
+
+  x[0] = r * r;
+  x[1] = dp_cut * dp_cut;
+  x[2] = x[0] - x[1];
+
+  elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
+  elstat_value(dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
+
+  *fnval_tail = ftail - ftail_cut - (r - dp_cut) * gtail_cut*dp_cut ;
+  *grad_tail = gtail - gtail_cut * dp_cut / r ;      /*  1/r dV/r */
+  *ggrad_tail = 0.0;
+}
+#endif //DSF
+
+
 /****************************************************************
  *
  *  calculate tail of coulomb-potential and its first derivative
@@ -1263,9 +1291,15 @@ void init_tails(double dp_kappa)
   int   i, j;
 
   for (i = 0; i < natoms; i++)
-    for (j = 0; j < atoms[i].num_neigh; j++)
+    for (j = 0; j < atoms[i].num_neigh; j++){
+#ifdef DSF
+      elstat_dsf(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
+	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+#else
       elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
 	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+#endif //DSF
+    }
 
   return;
 }

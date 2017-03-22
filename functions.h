@@ -127,6 +127,7 @@ void  ms_shift(double, double *, double *);
 void  buck_shift(double, double *, double *);
 void  elstat_value(double, double, double *, double *, double *);
 void  elstat_shift(double, double, double *, double *, double *);
+void  elstat_dsf(double, double, double *, double *, double *);
 void  init_tails(double);
 #endif /* COULOMB */
 #ifdef DIPOLE
