@@ -217,6 +217,16 @@ void write_pot_table0(apot_table_t *apt, char *filename)
   fprintf(outfile, "%s\t\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][0],
     apt->dp_kappa[0], apt->pmin[apt->number + 1][0], apt->pmax[apt->number + 1][0]);
 
+#ifdef CSH
+  fprintf(outfile, "\n");
+  fprintf(outfile, "coreshell\n");
+  fprintf(outfile, "coulweight");
+  for (i = 0; i < paircol; i++) {
+    fprintf(outfile, "%d\t ", apt->cweight[i] );
+  }
+  fprintf(outfile, "\n \n");
+#endif //CSH
+
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],

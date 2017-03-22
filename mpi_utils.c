@@ -401,6 +401,9 @@ void broadcast_params()
     apot_table.idxpot = (int *)malloc(apot_table.number * sizeof(int));
 #ifdef COULOMB
     apot_table.ratio = (double *)malloc(ntypes * sizeof(double));
+#ifdef CSH
+    apot_table.cweight = (int *)malloc(paircol * sizeof(int));
+#endif // CSH
 #endif /* COULOMB */
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
@@ -416,6 +419,9 @@ void broadcast_params()
     reg_for_free(apot_table.idxpot, "apot_table.idxpot");
 #ifdef COULOMB
     reg_for_free(apot_table.ratio, "apot_table.ratio");
+#ifdef CSH
+    reg_for_free(apot_table.cweight, "apot_table.cweight");
+#endif // CSH
 #endif
     reg_for_free(smooth_pot, "smooth_pot");
     reg_for_free(invar_pot, "invar_pot");
@@ -443,6 +449,9 @@ void broadcast_params()
 #ifdef COULOMB
   MPI_Bcast(&apot_table.last_charge, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.ratio, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#ifdef CSH
+  MPI_Bcast(apot_table.cweight, paircol, MPI_INT, 0, MPI_COMM_WORLD);
+#endif // CSH
 #endif /* COULOMB */
   if (have_globals) {
     if (myid > 0) {

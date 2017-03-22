@@ -274,6 +274,9 @@ typedef struct {
   double last_charge;		/* last charge determined on the basis of charge neutrality */
   double *dp_kappa;		/* parameter kappa */
   int   sw_kappa;		/* switch for kappa-optimization */
+#ifdef CSH
+  int   *cweight;		 /* switch for coulomb interaction of pairs */
+#endif
 #endif
 #ifdef DIPOLE
   double *dp_alpha;		/* polarisability */
