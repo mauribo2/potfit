@@ -192,23 +192,23 @@ void broadcast_params()
   /* *INDENT-OFF* */
   size = 0;
   blklens[size] = 1; 		typen[size++] = MPI_DOUBLE;    	/* cos */
-#ifdef MEAM
+#ifdef MEAM || ANG
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* slot */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* shift */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* step */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;   	/* g */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* dg */
-#endif /* MEAM */
+#endif /* MEAM || ANG */
 
   count = 0;
   MPI_Address(&testangl.cos, 		&displs[count++]);
-#ifdef MEAM
+#ifdef MEAM || ANG
   MPI_Address(&testangl.slot, 		&displs[count++]);
   MPI_Address(&testangl.shift, 		&displs[count++]);
   MPI_Address(&testangl.step, 		&displs[count++]);
   MPI_Address(&testangl.g, 		&displs[count++]);
   MPI_Address(&testangl.dg, 		&displs[count++]);
-#endif /* MEAM */
+#endif /* MEAM || ANG */
   /* *INDENT-ON* */
 
   /* set displacements */

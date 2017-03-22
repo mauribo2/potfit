@@ -148,7 +148,7 @@ LIBMDIR 	= /opt/acml/libm
 
 # ITAP settings
 #BIN_DIR 	= ${HOME}/bin/i386-linux
-#MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
+#MKLDIR         = /common/linux/paket/intel/compiler-11.0/cc/mkl
 #ACML4DIR  	= /common/linux/paket/acml4.4.0/gfortran64
 
 ###########################################################################
@@ -423,7 +423,19 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-  POTFITSRC      += force_pair.c
+  ifneq (,$(strip $(findstring ang,${MAKETARGET})))
+    ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+      ifneq (,$(strip $(findstring csh,${MAKETARGET})))
+        POTFITSRC	+= force_pairang_elstat_csh.c
+      else
+        POTFITSRC	+= force_pairang_elstat.c
+      endif
+    else
+      POTFITSRC	+= force_pairang.c
+    endif
+  else
+    POTFITSRC	+= force_pair.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
@@ -439,8 +451,10 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 endif
 
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC      += force_elstat.c
+  ifeq (,$(strip $(findstring ang,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
   endif
 endif
 
@@ -508,6 +522,12 @@ INTERACTION = 0
 # pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
   CFLAGS += -DPAIR
+  ifneq (,$(strip $(findstring ang,${MAKETARGET})))
+    CFLAGS += -DANG
+    ifneq (,$(strip $(findstring csh,${MAKETARGET})))
+      CFLAGS += -DCSH
+    endif
+  endif
   INTERACTION = 1
 endif
 
@@ -528,9 +548,11 @@ endif
 
 # COULOMB
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    ifneq (,$(findstring 1,${INTERACTION}))
-      ERROR += More than one potential model specified
+  ifeq (,$(strip $(findstring pair,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      ifneq (,$(findstring 1,${INTERACTION}))
+        ERROR += More than one potential model specified
+      endif
     endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))

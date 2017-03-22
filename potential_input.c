@@ -112,6 +112,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
       npots = 3 * paircol + 2 * ntypes;
 #endif /* ADP */
 
+#ifdef ANG
+      npots = 2 * paircol + ntypes;
+#endif /* ANG */
+
 #ifdef MEAM
       npots = 2 * paircol + 3 * ntypes;
 #endif /* MEAM */

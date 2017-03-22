@@ -325,7 +325,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
       fprintf(outfile, " %s", elements[i]);
 #endif /* TBEAM */
 #endif /* EAM || MEAM */
-#ifdef MEAM
+#ifdef MEAM || ANG
     /* pre-anglpart */
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
@@ -333,7 +333,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
     /* angl part */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
-#endif /* MEAM */
+#endif /* MEAM || ANG */
   }
   if (have_invar) {
     fprintf(outfile, "\n#I");
