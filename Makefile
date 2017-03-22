@@ -538,6 +538,9 @@ ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   endif
   CFLAGS  += -DCOULOMB
   INTERACTION = 1
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+    CFLAGS  += -DDSF
+  endif
 endif
 
 # DIPOLE
@@ -741,6 +744,8 @@ ifneq (,${STRIP})
     endif
   endif
 endif
+	@echo -e "\nCompiled with options"
+	@echo -e "CC=${CC} \nCFLAGS=${CFLAGS} \nLIBS=${LIBS}\n"
 	@echo -e "Building $@ was sucessfull."
 
 # First recursion only set the MAKETARGET Variable
