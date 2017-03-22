@@ -136,7 +136,7 @@ SYSTEM 		= $(shell uname -m)-gcc
 
 # This is the directory where the potfit binary will be moved to.
 # If BIN_DIR is empty, the binary will not be moved.
-BIN_DIR 	= bin/
+BIN_DIR 	= bin_old/
 
 # Base directory of your installation of the MKL or ACML
 
