@@ -170,6 +170,8 @@ ACML5PATH 	= ${ACML5DIR}/lib
 #
 ###########################################################################
 
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+
 ifeq (${uname_S},Darwin)
   TARGET = MACOS
 else
@@ -238,18 +240,10 @@ ifeq (x86_64-gcc,${SYSTEM})
 # general optimization flags
   OPT_FLAGS     += -O3 -march=native -Wno-unused
 
-
 # profiling and debug flags
   PROF_FLAGS    += -g3 -pg
   PROF_LIBS     += -g3 -pg
   DEBUG_FLAGS   += -g3 -Wall
-
-# Intel Math Kernel Library
-ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
-		   -Wl,--end-group -lpthread -Wl,--as-needed
-endif
 
 ifeq (${MATH_LIB},__ACCELERATE__)
   OPT_FLAGS    += -Wa,-q
@@ -727,6 +721,8 @@ ifneq (,$(findstring resc,${MAKETARGET}))
 CFLAGS += -DRESCALE
 endif
 
+CFLAGS += -D${MATH_LIB}
+
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})
 
@@ -787,13 +783,15 @@ else
 	@mkdir -p ${BIN_DIR}
 	@${CC} ${LFLAGS_${PARALLEL}} -o ${BIN_DIR}/$@ ${OBJECTS} ${LIBS}
 endif
-ifneq (,${STRIP})
-  ifeq (,$(findstring prof,${MAKETARGET}))
-    ifeq (,$(findstring debug,${MAKETARGET}))
-      ifeq (,${BIN_DIR})
-	@${STRIP} --strip-unneeded -R .comment $@
-      else
-	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
+ifneq (${TARGET},MACOS)
+  ifneq (,${STRIP})
+    ifeq (,$(findstring prof,${MAKETARGET}))
+      ifeq (,$(findstring debug,${MAKETARGET}))
+        ifeq (,${BIN_DIR})
+  	@${STRIP} --strip-unneeded -R .comment $@
+        else
+  	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
+        endif
       endif
     endif
   endif
