@@ -521,12 +521,13 @@ INTERACTION = 0
 
 # pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
-  CFLAGS += -DPAIR
   ifneq (,$(strip $(findstring ang,${MAKETARGET})))
     CFLAGS += -DANG
     ifneq (,$(strip $(findstring csh,${MAKETARGET})))
       CFLAGS += -DCSH
     endif
+  else
+    CFLAGS += -DPAIR
   endif
   INTERACTION = 1
 endif
