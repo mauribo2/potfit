@@ -292,10 +292,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	       Note: it is "paircol+2*ntypes" spots away in the array */
 
 	    /* Check that atom j lies inside f_col2 */
-	    if (neigh_j->r < calc_pot.end[neigh_j->col[2]]) {
+	    if (neigh_j->r < calc_pot.end[neigh_j->col[1]]) {
 	      /* Store the f(r_ij) value and the gradient for future use */
 	      neigh_j->f =
-		splint_comb_dir(&calc_pot, xi, neigh_j->slot[2], neigh_j->shift[2], neigh_j->step[2],
+		splint_comb_dir(&calc_pot, xi, neigh_j->slot[1], neigh_j->shift[1], neigh_j->step[1],
 		&neigh_j->df);
 	    } else {
 	      /* Store f and f' = 0 if doesn't lie in boundary to be used later when calculating forces */
