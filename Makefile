@@ -170,6 +170,28 @@ ACML5PATH 	= ${ACML5DIR}/lib
 #
 ###########################################################################
 
+ifeq (${uname_S},Darwin)
+  TARGET = MACOS
+else
+  TARGET = LINUX
+endif
+
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  MATH_LIB = ACML4
+else ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  MATH_LIB = ACML5
+else ifneq (,$(strip $(findstring mkl,${MAKETARGET})))
+  MATH_LIB = MKL
+else
+  ifeq (${TARGET},MACOS)
+    # accelerate is the default for Mac OS
+    MATH_LIB = __ACCELERATE__
+  else
+    MATH_LIB = MKL
+  endif
+endif
+
+
 ifeq (x86_64-icc,${SYSTEM})
 # compiler
   CC_SERIAL     = icc
@@ -216,6 +238,7 @@ ifeq (x86_64-gcc,${SYSTEM})
 # general optimization flags
   OPT_FLAGS     += -O3 -march=native -Wno-unused
 
+
 # profiling and debug flags
   PROF_FLAGS    += -g3 -pg
   PROF_LIBS     += -g3 -pg
@@ -228,15 +251,20 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
-# AMD Core Math Library
-ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  CINCLUDE     	+= -I${ACML4DIR}/include
-  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
-endif
-ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
-  CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
-  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
+ifeq (${MATH_LIB},__ACCELERATE__)
+  OPT_FLAGS    += -Wa,-q
+  LIBS += -framework Accelerate
+else ifeq (${MATH_LIB},MKL)
+  CINCLUDE      += -I${MKLDIR}/include
+  LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+                   -Wl,--end-group -lpthread -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML4)
+  CINCLUDE      += -I${ACML4DIR}/include
+  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML5)
+  LIBMPATH      = ${LIBMDIR}/lib/dynamic
+  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
  export        OMPI_CC OMPI_CLINKER
