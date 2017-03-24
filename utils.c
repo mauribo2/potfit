@@ -41,13 +41,13 @@
 
 /* 64-bit */
 #elif UINTPTR_MAX == 0xffffffffffffffff
-#if defined(MKL)
+#if defined MKL
 #include <mkl_vml.h>
-#elif defined(ACML4)
+#elif defined ACML4
 #include <acml_mv.h>
-#elif defined(ACML5)
+#elif defined ACML5
 #include <amdlibm.h>
-#elif defined(__ACCELERATE__)
+#elif defined __ACCELERATE__
 #include <Accelerate/Accelerate.h>
 #else
 #error No math library defined!
@@ -348,7 +348,7 @@ double normdist()
  *
  ****************************************************************/
 
-#if defined(__ACCELERATE__)
+#if defined __ACCELERATE__
 static const int g_dim = 1;
 #endif // __ACCELERATE__
 
@@ -357,13 +357,13 @@ void power_1(double *result, double *x, double *y)
 #if defined(_32BIT)
   *result = pow(*x, *y);
 #else
-#if defined(MKL)
+#if defined MKL
   vdPow(1, x, y, result);
-#elif defined(ACML4)
+#elif defined ACML4
   *result = fastpow(*x, *y);
-#elif defined(ACML5)
+#elif defined ACML5
   *result = pow(*x, *y);
-#elif defined(__ACCELERATE__)
+#elif defined __ACCELERATE__
   vvpow(result, y, x, &g_dim);
 #endif
 #endif  // _32BIT
@@ -376,17 +376,17 @@ void power_m(int dim, double *result, double *x, double *y)
   for (i = 0; i < dim; i++)
     result[i] = pow(x[i], y[i]);
 #else
-#if defined(MKL)
+#if defined MKL
   vdPow(dim, x, y, result);
-#elif defined(ACML4)
+#elif defined ACML4
   int i;
   for (i = 0; i < dim; i++)
     *(result + i) = fastpow(*(x + i), *(y + i));
-#elif defined(ACML5)
+#elif defined ACML5
   int i;
   for (i = 0; i < dim; i++)
     *(result + i) = pow(*(x + i), *(y + i));
-#elif defined(__ACCELERATE__)
+#elif defined __ACCELERATE__
   vvpow(result, y, x, &dim);
 #endif
 #endif  // _32BIT

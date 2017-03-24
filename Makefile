@@ -209,22 +209,20 @@ ifeq (x86_64-icc,${SYSTEM})
   PROF_LIBS     += --profile-functions
   DEBUG_FLAGS   += -g -Wall
 
-# Intel Math Kernel Library
-ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  CINCLUDE 	+= -I${MKLDIR}/include
-  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
-		   -lmkl_core -Wl,--end-group -lpthread
-endif
-
-# AMD Core Math Library
-ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  CINCLUDE 	+= -I${ACML4DIR}/include
-  LIBS		= -L${ACML4PATH} -lpthread -lacml -lacml_mv
-endif
-ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-   LIBMPATH 	= ${LIBMDIR}/lib/dynamic
-   CINCLUDE     += -I${ACML5DIR}/include -I${LIBMDIR}/include
-   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
+ifeq (${MATH_LIB},__ACCELERATE__)
+  OPT_FLAGS    += -Wa,-q
+  LIBS += -framework Accelerate
+else ifeq (${MATH_LIB},MKL)
+  CINCLUDE      += -I${MKLDIR}/include
+  LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+                   -Wl,--end-group -lpthread -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML4)
+  CINCLUDE      += -I${ACML4DIR}/include
+  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML5)
+  LIBMPATH      = ${LIBMDIR}/lib/dynamic
+  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -281,22 +279,20 @@ ifeq (x86_64-clang,${SYSTEM})
   ASAN_FLAGS 	+= -g -fsanitize=address -fno-omit-frame-pointer
   ASAN_LFLAGS 	= -g -fsanitize=address
 
-# Intel Math Kernel Library
-ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+ifeq (${MATH_LIB},__ACCELERATE__)
+  OPT_FLAGS    += -Wa,-q
+  LIBS += -framework Accelerate
+else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
-		   -Wl,--end-group -lpthread -Wl,--as-needed
-endif
-
-# AMD Core Math Library
-ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  CINCLUDE     	+= -I${ACML4DIR}/include
-  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
-endif
-ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
-  CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
-  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
+  LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+                   -Wl,--end-group -lpthread -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML4)
+  CINCLUDE      += -I${ACML4DIR}/include
+  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML5)
+  LIBMPATH      = ${LIBMDIR}/lib/dynamic
+  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -323,22 +319,20 @@ ifeq (i686-icc,${SYSTEM})
   PROF_LIBS 	+= -prof-gen
   DEBUG_FLAGS	+= -g -Wall -wd981 -wd1572
 
-# Intel Math Kernel Library
-ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+ifeq (${MATH_LIB},__ACCELERATE__)
+  OPT_FLAGS    += -Wa,-q
+  LIBS += -framework Accelerate
+else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -Wl,--end-group -lpthread
-endif
-
-# AMD Core Math Library
-ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  CINCLUDE     	+= -I$(ACML4DIR)/include
-  LIBS		+= -L${ACML4PATH} -lpthread -lacml
-endif
-ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
-  CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml
+  LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+                   -Wl,--end-group -lpthread -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML4)
+  CINCLUDE      += -I${ACML4DIR}/include
+  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML5)
+  LIBMPATH      = ${LIBMDIR}/lib/dynamic
+  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -359,22 +353,20 @@ ifeq (i686-gcc,${SYSTEM})
   PROF_LIBS	+= -g3 -pg
   DEBUG_FLAGS	+= -g3 -Wall
 
-# Intel Math Kernel Library
-ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+ifeq (${MATH_LIB},__ACCELERATE__)
+  OPT_FLAGS    += -Wa,-q
+  LIBS += -framework Accelerate
+else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -Wl,--end-group -lpthread -Wl,--as-needed
-endif
-
-# AMD Core Math Library
-ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  CINCLUDE     	+= -I$(ACML4DIR)/include
-  LIBS		+= -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
-endif
-ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
-  CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
+  LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+                   -Wl,--end-group -lpthread -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML4)
+  CINCLUDE      += -I${ACML4DIR}/include
+  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+else ifeq (${MATH_LIB},ACML5)
+  LIBMPATH      = ${LIBMDIR}/lib/dynamic
+  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -700,28 +692,13 @@ ifneq (,$(findstring contrib,${MAKETARGET}))
 CFLAGS += -DCONTRIB
 endif
 
-# force acml4 or acml5 over acml
-ifneq (,$(findstring acml,${MAKETARGET}))
-ifeq (,$(findstring acml4,${MAKETARGET}))
-ifeq (,$(findstring acml5,${MAKETARGET}))
-ERROR += The acml target is obsolete. Please use acml4 or acml5.
-endif
-endif
-endif
-
-ifneq (,$(findstring acml4,${MAKETARGET}))
-CFLAGS += -DACML -DACML4
-endif
-
-ifneq (,$(findstring acml5,${MAKETARGET}))
-CFLAGS += -DACML -DACML5
-endif
+# Precompiler options for Lapack lib
+CFLAGS += -D${MATH_LIB}
 
 ifneq (,$(findstring resc,${MAKETARGET}))
 CFLAGS += -DRESCALE
 endif
 
-CFLAGS += -D${MATH_LIB}
 
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})
@@ -788,9 +765,9 @@ ifneq (${TARGET},MACOS)
     ifeq (,$(findstring prof,${MAKETARGET}))
       ifeq (,$(findstring debug,${MAKETARGET}))
         ifeq (,${BIN_DIR})
-  	@${STRIP} --strip-unneeded -R .comment $@
+	@${STRIP} --strip-unneeded -R .comment $@
         else
-  	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
+	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
         endif
       endif
     endif

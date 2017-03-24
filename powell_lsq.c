@@ -40,11 +40,11 @@
 
 #include "potfit.h"
 
-#if defined(MKL)
+#if defined MKL
 #include <mkl_lapack.h>
-#elif defined(ACML)
+#elif defined ACML
 #include <acml.h>
-#elif defined(__ACCELERATE__)
+#elif defined __ACCELERATE__
 #include <Accelerate/Accelerate.h>
 #else
 #error No math library defined! 
@@ -186,7 +186,7 @@ void powell_lsq(double *xi)
 #if defined MKL
       dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim, &les_inverse[0][0],
 	&ndim, perm_indx, p, &ndim, q, &ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
-#elif ACML
+#elif defined ACML
       dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim, &les_inverse[0][0], ndim,
 	perm_indx, p, ndim, q, ndim, &cond, &ferror, &berror, &i);
 #elif defined __ACCELERATE__
