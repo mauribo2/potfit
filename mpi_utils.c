@@ -217,7 +217,7 @@ void broadcast_params()
   }
   displs[0] = 0;
 
-  MPI_Type_struct(size, blklens, displs, typen, &MPI_ANGL);
+  MPI_Type_create_struct(size, blklens, displs, typen, &MPI_ANGL);
   MPI_Type_commit(&MPI_ANGL);
 #endif /* THREEBODY */
 
