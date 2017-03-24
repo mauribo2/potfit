@@ -141,39 +141,39 @@ void broadcast_params()
 #endif /* TERSOFF */
 
   count = 0;
-  MPI_Address(&testneigh.type, 		&displs[count++]);
-  MPI_Address(&testneigh.nr, 		&displs[count++]);
-  MPI_Address(&testneigh.r, 		&displs[count++]);
-  MPI_Address(&testneigh.r2, 		&displs[count++]);
-  MPI_Address(&testneigh.inv_r, 	&displs[count++]);
-  MPI_Address(&testneigh.dist, 		&displs[count++]);
-  MPI_Address(&testneigh.dist_r,	&displs[count++]);
-  MPI_Address(testneigh.slot, 		&displs[count++]);
-  MPI_Address(testneigh.shift, 		&displs[count++]);
-  MPI_Address(testneigh.step, 		&displs[count++]);
-  MPI_Address(testneigh.col, 		&displs[count++]);
+  MPI_Get_address(&testneigh.type, 		&displs[count++]);
+  MPI_Get_address(&testneigh.nr, 		&displs[count++]);
+  MPI_Get_address(&testneigh.r, 		&displs[count++]);
+  MPI_Get_address(&testneigh.r2, 		&displs[count++]);
+  MPI_Get_address(&testneigh.inv_r, 	&displs[count++]);
+  MPI_Get_address(&testneigh.dist, 		&displs[count++]);
+  MPI_Get_address(&testneigh.dist_r,	&displs[count++]);
+  MPI_Get_address(testneigh.slot, 		&displs[count++]);
+  MPI_Get_address(testneigh.shift, 		&displs[count++]);
+  MPI_Get_address(testneigh.step, 		&displs[count++]);
+  MPI_Get_address(testneigh.col, 		&displs[count++]);
 #ifdef ADP
-  MPI_Address(&testneigh.sqrdist, 	&displs[count++]);
-  MPI_Address(&testneigh.u_val, 	&displs[count++]);
-  MPI_Address(&testneigh.u_grad, 	&displs[count++]);
-  MPI_Address(&testneigh.w_val, 	&displs[count++]);
-  MPI_Address(&testneigh.w_grad, 	&displs[count++]);
+  MPI_Get_address(&testneigh.sqrdist, 	&displs[count++]);
+  MPI_Get_address(&testneigh.u_val, 	&displs[count++]);
+  MPI_Get_address(&testneigh.u_grad, 	&displs[count++]);
+  MPI_Get_address(&testneigh.w_val, 	&displs[count++]);
+  MPI_Get_address(&testneigh.w_grad, 	&displs[count++]);
 #endif /* ADP */
 #ifdef COULOMB
-  MPI_Address(&testneigh.fnval_el, 	&displs[count++]);
-  MPI_Address(&testneigh.grad_el, 	&displs[count++]);
-  MPI_Address(&testneigh.ggrad_el, 	&displs[count++]);
+  MPI_Get_address(&testneigh.fnval_el, 	&displs[count++]);
+  MPI_Get_address(&testneigh.grad_el, 	&displs[count++]);
+  MPI_Get_address(&testneigh.ggrad_el, 	&displs[count++]);
 #endif /* COULOMB */
 #ifdef THREEBODY
-  MPI_Address(&testneigh.f, 		&displs[count++]);
-  MPI_Address(&testneigh.df, 		&displs[count++]);
-  MPI_Address(&testneigh.ijk_start, 	&displs[count++]);
+  MPI_Get_address(&testneigh.f, 		&displs[count++]);
+  MPI_Get_address(&testneigh.df, 		&displs[count++]);
+  MPI_Get_address(&testneigh.ijk_start, 	&displs[count++]);
 #endif /* THREEBODY */
 #ifdef MEAM
-  MPI_Address(&testneigh.drho, 		&displs[count++]);
+  MPI_Get_address(&testneigh.drho, 		&displs[count++]);
 #endif /* MEAM */
 #ifdef TERSOFF
-  MPI_Address(&testneigh.dzeta, 	&displs[count++]);
+  MPI_Get_address(&testneigh.dzeta, 	&displs[count++]);
 #endif /* MEAM */
 
   /* *INDENT-ON* */
@@ -201,13 +201,13 @@ void broadcast_params()
 #endif /* MEAM || ANG */
 
   count = 0;
-  MPI_Address(&testangl.cos, 		&displs[count++]);
+  MPI_Get_address(&testangl.cos, 		&displs[count++]);
 #if defined MEAM || defined ANG
-  MPI_Address(&testangl.slot, 		&displs[count++]);
-  MPI_Address(&testangl.shift, 		&displs[count++]);
-  MPI_Address(&testangl.step, 		&displs[count++]);
-  MPI_Address(&testangl.g, 		&displs[count++]);
-  MPI_Address(&testangl.dg, 		&displs[count++]);
+  MPI_Get_address(&testangl.slot, 		&displs[count++]);
+  MPI_Get_address(&testangl.shift, 		&displs[count++]);
+  MPI_Get_address(&testangl.step, 		&displs[count++]);
+  MPI_Get_address(&testangl.g, 		&displs[count++]);
+  MPI_Get_address(&testangl.dg, 		&displs[count++]);
 #endif /* MEAM || ANG */
   /* *INDENT-ON* */
 
@@ -261,36 +261,36 @@ void broadcast_params()
   /* DO NOT BROADCAST ANGLES !!! DYNAMIC ALLOCATION */
 
   count = 0;
-  MPI_Address(&testatom.type, 		&displs[count++]);
-  MPI_Address(&testatom.num_neigh, 	&displs[count++]);
-  MPI_Address(&testatom.pos, 		&displs[count++]);
-  MPI_Address(&testatom.force, 		&displs[count++]);
-  MPI_Address(&testatom.absforce, 	&displs[count++]);
-  MPI_Address(&testatom.conf, 		&displs[count++]);
+  MPI_Get_address(&testatom.type, 		&displs[count++]);
+  MPI_Get_address(&testatom.num_neigh, 	&displs[count++]);
+  MPI_Get_address(&testatom.pos, 		&displs[count++]);
+  MPI_Get_address(&testatom.force, 		&displs[count++]);
+  MPI_Get_address(&testatom.absforce, 	&displs[count++]);
+  MPI_Get_address(&testatom.conf, 		&displs[count++]);
 #ifdef CONTRIB
-  MPI_Address(&testatom.contrib, 	&displs[count++]);
+  MPI_Get_address(&testatom.contrib, 	&displs[count++]);
 #endif /* CONTRIB */
 #if defined EAM || defined ADP || defined MEAM
-  MPI_Address(&testatom.rho, 		&displs[count++]);
-  MPI_Address(&testatom.gradF, 		&displs[count++]);
+  MPI_Get_address(&testatom.rho, 		&displs[count++]);
+  MPI_Get_address(&testatom.gradF, 		&displs[count++]);
 #endif /* EAM || ADP */
 #ifdef ADP
-  MPI_Address(&testatom.mu, 		&displs[count++]);
-  MPI_Address(&testatom.lambda, 	&displs[count++]);
-  MPI_Address(&testatom.nu, 		&displs[count++]);
+  MPI_Get_address(&testatom.mu, 		&displs[count++]);
+  MPI_Get_address(&testatom.lambda, 	&displs[count++]);
+  MPI_Get_address(&testatom.nu, 		&displs[count++]);
 #endif /* ADP */
 #ifdef DIPOLE
-  MPI_Address(&testatom.E_stat, 	&displs[count++]);
-  MPI_Address(&testatom.p_sr, 		&displs[count++]);
-  MPI_Address(&testatom.E_ind, 		&displs[count++]);
-  MPI_Address(&testatom.p_ind, 		&displs[count++]);
-  MPI_Address(&testatom.E_old, 		&displs[count++]);
-  MPI_Address(&testatom.E_tot, 		&displs[count++]);
+  MPI_Get_address(&testatom.E_stat, 	&displs[count++]);
+  MPI_Get_address(&testatom.p_sr, 		&displs[count++]);
+  MPI_Get_address(&testatom.E_ind, 		&displs[count++]);
+  MPI_Get_address(&testatom.p_ind, 		&displs[count++]);
+  MPI_Get_address(&testatom.E_old, 		&displs[count++]);
+  MPI_Get_address(&testatom.E_tot, 		&displs[count++]);
 #endif /* DIPOLE */
 #ifdef THREEBODY
-  MPI_Address(&testatom.num_angles, 	&displs[count++]);
+  MPI_Get_address(&testatom.num_angles, 	&displs[count++]);
 #ifdef MEAM
-  MPI_Address(&testatom.rho_eam,	&displs[count++]);
+  MPI_Get_address(&testatom.rho_eam,	&displs[count++]);
 #endif /* MEAM */
 #endif /* THREEBODY */
 
