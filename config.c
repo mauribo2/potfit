@@ -1011,13 +1011,10 @@ void read_config(char *filename)
                           }
                       }
                       ijk++;
-                      printf("\nnumber of angles so far for atom %d are %d\n",i,ijk);
                   }
               }/* third loop over atoms */
           }
       }/* second loop over atoms */
-      printf("\nnumber of angle for atom %d are %d\n",i,ijk);
-      printf("size of angle part is %d\n",sizeof(angle_t));
       atoms[i].num_angles = ijk;
       reg_for_free(atoms[i].angle_part, "angular part atom %d", i);
   }				/* first loop over atoms */
@@ -1113,12 +1110,10 @@ void read_config(char *filename)
      
   for (i = 0; i < ntypes; i++)
     na_type[nconf][i] = 0;
-  printf("LINE 1126\n");
   for (i = 0; i < nconf; i++)
     for (j = 0; j < ntypes; j++)
       na_type[nconf][j] += na_type[i][j];
 
-    printf("LINE 1129\n");
   /* print diagnostic message */
   printf("\nRead %d configurations (%d with forces, %d with stresses)\n", nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
