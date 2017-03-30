@@ -126,7 +126,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
   double sum_charges;
   double dp_kappa;
   int self;
-  double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j;
+  double fnval, grad, fnval_tail, grad_tail;
   int type1, type2;
 
 
@@ -363,22 +363,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                            &neigh_j->grad_el, &neigh_j->ggrad_el);
 #endif // DSF
 
-            /* In small cells, an atom might interact with itself */
-            self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
-
             if (neigh_j->r < g_config.dp_cut &&
                 (charge[type1] || charge[type2])) {
               fnval_tail = neigh_j->fnval_el;
               grad_tail = neigh_j->grad_el;
 
-              grad_i = charge[type2] * grad_tail;
-              if (type1 == type2) {
-                grad_j = grad_i;
-              } else {
-                grad_j = charge[type1] * grad_tail;
-              }
               fnval = charge[type1] * charge[type2] * fnval_tail;
-              grad = charge[type1] * grad_i;
+              grad = charge[type1] * charge[type2] * grad_tail;
 
 	      /* check if pair is a core-shell one
 	         and suppress coulomb contribution */
@@ -388,13 +379,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 			   neigh_j->inv_r;
                   grad=0;
                 }
-              }
-
-              if (self) {
-                grad_i *= 0.5;
-                grad_j *= 0.5;
-                fnval *= 0.5;
-                grad *= 0.5;
               }
 
               forces[g_calc.energy_p + h] += 0.5 * fnval;
@@ -593,7 +577,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             qq = charge[type1] * charge[type1];
 #if defined(DSF)
             fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
-              (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
+             (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
 #else
             fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
 #endif // DSF

@@ -126,7 +126,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
   double sum_charges;
   double dp_kappa;
   int self;
-  double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j;
+  double fnval, grad, fnval_tail, grad_tail;
   int type1, type2;
 
 
@@ -304,12 +304,11 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             neigh_j = atom->neigh + j;
             type2 = neigh_j->type;
 
-            /* Find the correct column in the potential table for pair
-               potential: phi_ij
-               For Binary Alloy: 0 = phi_AA, 1 = (phi_AB or phi_BA), 2 = phi_BB
-               where typ = A = 0 and typ = B = 1 */
-            /* We need to check that neighbor atom exists inside pair
-             * potential's radius */
+
+            /* calculate short-range forces */
+            /* Correct column in the potential table for pair
+               potential phi_ij: neigh_j->col[0] */
+            /* Check neighbor lies inside pair potential's radius */
             if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[0]]) {
               /* Compute phi and phi' value given radial distance
                  NOTE: slot = spline point index right below radial distance
@@ -362,29 +361,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                            &neigh_j->grad_el, &neigh_j->ggrad_el);
 #endif // DSF
 
-            /* In small cells, an atom might interact with itself */
-            self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
-
             if (neigh_j->r < g_config.dp_cut &&
                 (charge[type1] || charge[type2])) {
               fnval_tail = neigh_j->fnval_el;
               grad_tail = neigh_j->grad_el;
 
-              grad_i = charge[type2] * grad_tail;
-              if (type1 == type2) {
-                grad_j = grad_i;
-              } else {
-                grad_j = charge[type1] * grad_tail;
-              }
               fnval = charge[type1] * charge[type2] * fnval_tail;
-              grad = charge[type1] * grad_i;
-
-              if (self) {
-                grad_i *= 0.5;
-                grad_j *= 0.5;
-                fnval *= 0.5;
-                grad *= 0.5;
-              }
+              grad = charge[type1] * charge[type2] * grad_tail;
 
               forces[g_calc.energy_p + h] += 0.5 * fnval;
 
@@ -565,21 +548,22 @@ double calc_forces(double* xi_opt, double* forces, int flag)
         for (i = 0; i < g_config.inconf[h]; i++) { /* atoms */
           atom =
               g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
-          n_i = 3 * (g_config.cnfstart[h] + i);
           type1 = atom->type;
+          n_i = 3 * (g_config.cnfstart[h] + i);
 
           /* self energy contributions */
           if (charge[type1]) {
             qq = charge[type1] * charge[type1];
 #if defined(DSF)
             fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
-              (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
+             (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
 #else
             fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
 #endif // DSF
             forces[g_calc.energy_p + h] -= fnval;
           }
-          /* sum-up: whole force contributions flow into tmpsum */
+
+	  /* sum-up: whole force contributions flow into tmpsum */
           if (uf) {
 #if defined(FWEIGHT)
             /* Weigh by absolute value of force */

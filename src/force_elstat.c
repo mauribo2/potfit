@@ -802,7 +802,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
          * contributions */
         double qq;
 #if defined(DSF)
-       double fnval_cut, gtail_cut, ggrad_cut;
+        double fnval_cut, gtail_cut, ggrad_cut;
         elstat_value(g_config.dp_cut, dp_kappa, &fnval_cut, &gtail_cut, &ggrad_cut);
 #endif // DSF
 #if defined(DIPOLE)
@@ -818,10 +818,10 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           if (charge[type1]) {
             qq = charge[type1] * charge[type1];
 #if defined(DSF)
-           fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
-              (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
+            fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
+             (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
 #else
-             fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
+            fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
 #endif // DSF
             forces[g_calc.energy_p + h] -= fnval;
           }
