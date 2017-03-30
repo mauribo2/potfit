@@ -126,7 +126,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
   double sum_charges;
   double dp_kappa;
   int self;
-  double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j;
+  double fnval, grad, fnval_tail, grad_tail;
   int type1, type2;
 
 
@@ -363,22 +363,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                            &neigh_j->grad_el, &neigh_j->ggrad_el);
 #endif // DSF
 
-            /* In small cells, an atom might interact with itself */
-            self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
-
             if (neigh_j->r < g_config.dp_cut &&
                 (charge[type1] || charge[type2])) {
               fnval_tail = neigh_j->fnval_el;
               grad_tail = neigh_j->grad_el;
 
-              grad_i = charge[type2] * grad_tail;
-              if (type1 == type2) {
-                grad_j = grad_i;
-              } else {
-                grad_j = charge[type1] * grad_tail;
-              }
               fnval = charge[type1] * charge[type2] * fnval_tail;
-              grad = charge[type1] * grad_i;
+              grad = charge[type1] * charge[type2] * grad_tail;
 
 	      /* check if pair is a core-shell one
 	         and suppress coulomb contribution */
@@ -388,13 +379,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 			   neigh_j->inv_r;
                   grad=0;
                 }
-              }
-
-              if (self) {
-                grad_i *= 0.5;
-                grad_j *= 0.5;
-                fnval *= 0.5;
-                grad *= 0.5;
               }
 
               forces[g_calc.energy_p + h] += 0.5 * fnval;
@@ -447,6 +431,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             }
           } /* END LOOP OVER NEIGHBORS */
 
+          /* Compute angular energies and forces */
 
           /* Find the correct column in the potential table for angle part:
              g_ijk
@@ -457,134 +442,120 @@ double calc_forces(double* xi_opt, double* forces, int flag)
              phi(paircol)+f(paircol)
              col2 = 2 * paircol + typ1; */
 
-          /* Loop over every angle formed by neighbors
-             N(N-1)/2 possible combinations
-             Used in computing angular part g_ijk */
+          /* Loop over every angle stored with neighbors */
 
           /* set angl pointer to angl_part of current atom */
           angle = atom->angle_part;
 
-          /* set sum of angular component to zero */
+          /* reset sum of angular component */
           angener_sum = 0.0;
 
           for (j = 0; j < atom->num_neigh - 1; j++) {
             /* Get pointer to neighbor jj */
             neigh_j = atom->neigh + j;
-
-            for (k = j + 1; k < atom->num_neigh; k++) {
-              /* Get pointer to neighbor kk */
-              neigh_k = atom->neigh + k;
-
-              /* The cos(theta) should always lie inside -1 ... 1
-                 So store the g and g' without checking bounds */
-              angle->g = splint_comb_dir(&g_pot.calc_pot, xi, angle->slot,
-                                         angle->shift, angle->step, &angle->dg);
-
-              /* Sum up angular contribution for atom i caused by j and k
-                 f_ij * f_ik * m_ijk */
-              angener_sum += neigh_j->f * neigh_k->f * angle->g;
-
-#if defined(DEBUG)
-              acontrib = neigh_j->f * neigh_k->f * angle->g;
-	      if (acontrib > 0.000000001 )  {
-                 printf("conf:%d  int: %d %d %d   %f  %f \n",  atom->conf,  neigh_j->type , atom->type, neigh_k->type, acontrib , angle->theta*180/M_PI );
-                 //printf(" idx %d %d  %d  %f  %f \n", i +1, neigh_j->nr +1 , neigh_k->nr +1, neigh_j->r , neigh_k->r  );
-	      }
-#endif
-              /* Increase angl pointer */
-              angle++;
-            }
-          }
-
-          forces[g_calc.energy_p + h] += angener_sum;
-
-          /* Compute Angular Forces */
-          if (uf) {
-            /********************************/
-
-            /* Loop over every angle formed by neighbors
-               N(N-1)/2 possible combinations
-               Used in computing angular part g_ijk */
-
-            /* set angle pointer to angl_part of current atom */
-            angle = atom->angle_part;
-
-            for (j = 0; j < atom->num_neigh - 1; j++) {
-              /* Get pointer to neighbor j */
-              neigh_j = atom->neigh + j;
-              /* Force location for atom j */
-              n_j = 3 * neigh_j->nr;
+            /* check that j lies inside f_ij */
+            if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
 
               for (k = j + 1; k < atom->num_neigh; k++) {
-                /* Get pointer to neighbor k */
+                /* Get pointer to neighbor kk */
                 neigh_k = atom->neigh + k;
+                /* check that k lies inside f_ik */
+                if (neigh_k->r < g_pot.calc_pot.end[neigh_k->col[1]]) {
 
-                /* Force location for atom k */
-                n_k = 3 * neigh_k->nr;
+                  /* The cos(theta) should always lie inside -1 ... 1
+                     So store the g and g' without checking bounds */
+                  angle->g = splint_comb_dir(&g_pot.calc_pot, xi, angle->slot,
+                                             angle->shift, angle->step,
+					     &angle->dg);
 
-                /* Some tmp variables to clean up force fn below */
-                dV3j = angle->g * neigh_j->df * neigh_k->f;
-                dV3k = angle->g * neigh_j->f * neigh_k->df;
-                V3 = neigh_j->f * neigh_k->f * angle->dg;
+                  /* Sum up angular contribution for atom i caused by j and k
+                     f_ij * f_ik * m_ijk */
+                  angener_sum += neigh_j->f * neigh_k->f * angle->g;
 
-                vlj = V3 * neigh_j->inv_r;
-                vlk = V3 * neigh_k->inv_r;
-                vv3j = dV3j - vlj * angle->cos;
-                vv3k = dV3k - vlk * angle->cos;
+#if defined(DEBUG)
+                  acontrib = neigh_j->f * neigh_k->f * angle->g;
+                  if (acontrib > 0.000000001 )  {
+                    printf("conf:%d  int: %d %d %d   %f  %f \n",  atom->conf,
+				 neigh_j->type , atom->type, neigh_k->type,
+				 acontrib , angle->theta*180/M_PI );
+                  }
+#endif
 
-                dfj.x = vv3j * neigh_j->dist_r.x + vlj * neigh_k->dist_r.x;
-                dfj.y = vv3j * neigh_j->dist_r.y + vlj * neigh_k->dist_r.y;
-                dfj.z = vv3j * neigh_j->dist_r.z + vlj * neigh_k->dist_r.z;
+                  if (uf) {
+                    /* Force location for atom j */
+                    n_j = 3 * neigh_j->nr;
+                    /* Force location for atom k */
+                    n_k = 3 * neigh_k->nr;
 
-                dfk.x = vv3k * neigh_k->dist_r.x + vlk * neigh_j->dist_r.x;
-                dfk.y = vv3k * neigh_k->dist_r.y + vlk * neigh_j->dist_r.y;
-                dfk.z = vv3k * neigh_k->dist_r.z + vlk * neigh_j->dist_r.z;
+                    /* Some tmp variables to clean up force fn below */
+                    dV3j = angle->g * neigh_j->df * neigh_k->f;
+                    dV3k = angle->g * neigh_j->f * neigh_k->df;
+                    V3 = neigh_j->f * neigh_k->f * angle->dg;
 
-                /* Force on atom i from j and k */
-                forces[n_i + 0] += (dfj.x + dfk.x);
-                forces[n_i + 1] += (dfj.y + dfk.y);
-                forces[n_i + 2] += (dfj.z + dfk.z);
+                    vlj = V3 * neigh_j->inv_r;
+                    vlk = V3 * neigh_k->inv_r;
+                    vv3j = dV3j - vlj * angle->cos;
+                    vv3k = dV3k - vlk * angle->cos;
 
-                /* Reaction force on atom j from i and k */
-                forces[n_j + 0] -= dfj.x;
-                forces[n_j + 1] -= dfj.y;
-                forces[n_j + 2] -= dfj.z;
+                    dfj.x = vv3j * neigh_j->dist_r.x + vlj * neigh_k->dist_r.x;
+                    dfj.y = vv3j * neigh_j->dist_r.y + vlj * neigh_k->dist_r.y;
+                    dfj.z = vv3j * neigh_j->dist_r.z + vlj * neigh_k->dist_r.z;
 
-                /* Reaction force on atom k from i and j */
-                forces[n_k + 0] -= dfk.x;
-                forces[n_k + 1] -= dfk.y;
-                forces[n_k + 2] -= dfk.z;
+                    dfk.x = vv3k * neigh_k->dist_r.x + vlk * neigh_j->dist_r.x;
+                    dfk.y = vv3k * neigh_k->dist_r.y + vlk * neigh_j->dist_r.y;
+                    dfk.z = vv3k * neigh_k->dist_r.z + vlk * neigh_j->dist_r.z;
+
+                    /* Force on atom i from j and k */
+                    forces[n_i + 0] += (dfj.x + dfk.x);
+                    forces[n_i + 1] += (dfj.y + dfk.y);
+                    forces[n_i + 2] += (dfj.z + dfk.z);
+
+                    /* Reaction force on atom j from i and k */
+                    forces[n_j + 0] -= dfj.x;
+                    forces[n_j + 1] -= dfj.y;
+                    forces[n_j + 2] -= dfj.z;
+
+                    /* Reaction force on atom k from i and j */
+                    forces[n_k + 0] -= dfk.x;
+                    forces[n_k + 1] -= dfk.y;
+                    forces[n_k + 2] -= dfk.z;
 
 #if defined(STRESS)
-                if (us) {
-                  /* Force from j on atom i */
-                  tmp_force.x = dfj.x;
-                  tmp_force.y = dfj.y;
-                  tmp_force.z = dfj.z;
-                  forces[stresses + 0] -= neigh_j->dist.x * tmp_force.x;
-                  forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
-                  forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
-                  forces[stresses + 3] -= neigh_j->dist.x * tmp_force.y;
-                  forces[stresses + 4] -= neigh_j->dist.y * tmp_force.z;
-                  forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
+                    if (us) {
+                      /* Force from j on atom i */
+                      tmp_force.x = dfj.x;
+                      tmp_force.y = dfj.y;
+                      tmp_force.z = dfj.z;
+                      forces[stresses + 0] -= neigh_j->dist.x * tmp_force.x;
+                      forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
+                      forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
+                      forces[stresses + 3] -= neigh_j->dist.x * tmp_force.y;
+                      forces[stresses + 4] -= neigh_j->dist.y * tmp_force.z;
+                      forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
 
-                  /* Force from k on atom i */
-                  tmp_force.x = dfk.x;
-                  tmp_force.y = dfk.y;
-                  tmp_force.z = dfk.z;
-                  forces[stresses + 0] -= neigh_k->dist.x * tmp_force.x;
-                  forces[stresses + 1] -= neigh_k->dist.y * tmp_force.y;
-                  forces[stresses + 2] -= neigh_k->dist.z * tmp_force.z;
-                  forces[stresses + 3] -= neigh_k->dist.x * tmp_force.y;
-                  forces[stresses + 4] -= neigh_k->dist.y * tmp_force.z;
-                  forces[stresses + 5] -= neigh_k->dist.z * tmp_force.x;
-                }
+                      /* Force from k on atom i */
+                      tmp_force.x = dfk.x;
+                      tmp_force.y = dfk.y;
+                      tmp_force.z = dfk.z;
+                      forces[stresses + 0] -= neigh_k->dist.x * tmp_force.x;
+                      forces[stresses + 1] -= neigh_k->dist.y * tmp_force.y;
+                      forces[stresses + 2] -= neigh_k->dist.z * tmp_force.z;
+                      forces[stresses + 3] -= neigh_k->dist.x * tmp_force.y;
+                      forces[stresses + 4] -= neigh_k->dist.y * tmp_force.z;
+                      forces[stresses + 5] -= neigh_k->dist.z * tmp_force.x;
+                    }
 #endif  // STRESS
-                /* Increase n_angl pointer */
-                angle++;
-              } /* End inner loop over angles (neighbor atom k) */
-            }   /* End outer loop over angles (neighbor atom j) */
-          }     /* uf */
+                  }     /* uf */
+                  /* Increase angl pointer */
+                  angle++;
+                }
+	      }  /* End inner loop over angles (neighbor atom k) */
+	    }
+          }  /* End outer loop over angles (neighbor atom j) */
+
+	  /* add angular contribution for atom i */
+          forces[g_calc.energy_p + h] += angener_sum;
+
         } /* END OF SECOND LOOP OVER ATOM i */
 
 
@@ -606,7 +577,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             qq = charge[type1] * charge[type1];
 #if defined(DSF)
             fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
-              (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
+             (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
 #else
             fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
 #endif // DSF

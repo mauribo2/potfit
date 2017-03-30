@@ -808,6 +808,10 @@ int broadcast_angles()
     atom = g_config.conf_atoms + i - g_mpi.firstatom;
     if (g_mpi.myid == 0)
       num_angles = g_config.atoms[i].num_angles;
+#if defined(ANG)
+    if (num_angles == 0)
+	    continue;
+#endif
     CHECK_RETURN(MPI_Bcast(&num_angles, 1, MPI_INT, 0, MPI_COMM_WORLD));
     if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
       atom->angle_part = (angle_t*)Malloc(num_angles * sizeof(angle_t));
