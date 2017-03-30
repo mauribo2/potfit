@@ -125,7 +125,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
   double charge[g_param.ntypes];
   double sum_charges;
   double dp_kappa;
-  int self;
   double fnval, grad, fnval_tail, grad_tail;
   int type1, type2;
 
