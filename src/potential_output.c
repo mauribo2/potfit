@@ -202,6 +202,16 @@ void write_pot_table0(char const* filename)
           apt->dp_kappa[0], apt->pmin[apt->number + 1][0],
           apt->pmax[apt->number + 1][0]);
 
+#ifdef CSH
+  fprintf(outfile, "\n");
+  fprintf(outfile, "coreshell\n");
+  fprintf(outfile, "coulweight  ");
+  for (int i = 0; i < g_calc.paircol; i++) {
+    fprintf(outfile, "%d ", apt->cweight[i] );
+  }
+  fprintf(outfile, "\n");
+#endif //CSH
+
 #if defined(DIPOLE)
   for (int i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],

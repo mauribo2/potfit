@@ -1355,8 +1355,8 @@ void init_angles(config_state* cstate)
               if ((fabs(ccos) - 1.0) > 1e-10) {
                 int type1 = g_config.atoms[i].type;
                 int type2 = g_config.atoms[i].neigh[j].type;
-                printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col,
-                       type1, type2);
+                printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col],
+			col, type1, type2);
                 fflush(stdout);
                 error(1, "cos out of range, it is strange!\n");
               }
