@@ -335,6 +335,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             /* END LOOP OVER NEIGHBORS */
           }
 
+          /* Compute angular energies and forces */
 
           /* Find the correct column in the potential table for angle part:
              g_ijk
@@ -345,9 +346,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
              phi(paircol)+f(paircol)
              col2 = 2 * paircol + typ1; */
 
-          /* Loop over every angle formed by neighbors
-             N(N-1)/2 possible combinations
-             Used in computing angular part g_ijk */
+          /* Loop over every angle stored with neighbors */
 
           /* set angl pointer to angl_part of current atom */
           angle = atom->angle_part;
@@ -377,40 +376,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                      f_ij * f_ik * m_ijk */
                   angener_sum += neigh_j->f * neigh_k->f * angle->g;
 
-                  /* Increase angl pointer */
-                  angle++;
-                }
-	      }
-	    }
-          }
-
-          forces[g_calc.energy_p + h] += angener_sum;
-
-          /* Compute Angular Forces */
-          if (uf) {
-            /********************************/
-
-            /* Loop over every angle formed by neighbors
-               N(N-1)/2 possible combinations
-               Used in computing angular part g_ijk */
-
-            /* set angle pointer to angl_part of current atom */
-            angle = atom->angle_part;
-
-            for (j = 0; j < atom->num_neigh - 1; j++) {
-              /* Get pointer to neighbor j */
-              neigh_j = atom->neigh + j;
-              /* check that j lies inside f_ij */
-              if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
-                /* Force location for atom j */
-                n_j = 3 * neigh_j->nr;
-
-                for (k = j + 1; k < atom->num_neigh; k++) {
-                  /* Get pointer to neighbor k */
-                  neigh_k = atom->neigh + k;
-                  /* check that k lies inside f_ik */
-                  if (neigh_k->r < g_pot.calc_pot.end[neigh_k->col[1]]) {
-
+                  if (uf) {
+                    /* Force location for atom j */
+                    n_j = 3 * neigh_j->nr;
                     /* Force location for atom k */
                     n_k = 3 * neigh_k->nr;
 
@@ -472,13 +440,17 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                       forces[stresses + 5] -= neigh_k->dist.z * tmp_force.x;
                     }
 #endif  // STRESS
-                    /* Increase n_angl pointer */
-                    angle++;
-		  }
-                } /* End inner loop over angles (neighbor atom k) */
-	      }
-            }   /* End outer loop over angles (neighbor atom j) */
-          }     /* uf */
+                  }     /* uf */
+                  /* Increase angl pointer */
+                  angle++;
+                }
+	      }  /* End inner loop over angles (neighbor atom k) */
+	    }
+          }  /* End outer loop over angles (neighbor atom j) */
+
+	  /* add angular contribution for atom i */
+          forces[g_calc.energy_p + h] += angener_sum;
+
         }       /* END OF SECOND LOOP OVER ATOM i */
 
         /* 3RD LOOP OVER ATOM i */
