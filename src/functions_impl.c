@@ -126,7 +126,6 @@ void ms_value(const double r, const double* p, double* f)
 ****************************************************************/
 
 #if defined(COULOMB)
-#if !defined(ANG)
 void buck_init(const double r, const double* p, double* pot, double* grad)
 {
   double x[3];
@@ -151,18 +150,6 @@ void buck_value(const double r, const double* p, double* f)
 
   *f = pot - pot_cut - r * (r - g_config.dp_cut) * grad_cut;
 }
-#else
-
-void buck_value(const double r, const double* p, double* f)
-{
-  double x = (p[1] * p[1]) / (r * r);
-  double y = x * x * x;
-  double r6 = r * r * r * r * r * r;
-
-  *f = p[0] * exp(-r / p[1]) - p[2] / r6;
-}
-
-#endif //!ANG
 
 #else
 
@@ -183,7 +170,7 @@ void buck_value(const double r, const double* p, double* f)
 
 void born_value(const double r, const double* p, double* f)
 {
-  double x = p[2] - r
+  double x = p[2] - r;
   double r2 = r * r ;
   double r6 = r2 * r2 * r2;
   double r8 = r6 * r2 ;
