@@ -126,7 +126,6 @@ void ms_value(const double r, const double* p, double* f)
 ****************************************************************/
 
 #if defined(COULOMB)
-
 void buck_init(const double r, const double* p, double* pot, double* grad)
 {
   double x[3];
@@ -163,6 +162,21 @@ void buck_value(const double r, const double* p, double* f)
 }
 
 #endif  // COULOMB
+
+/****************************************************************
+  born potential (without derivative!) - slightly modified
+
+*****************************************************************/
+
+void born_value(const double r, const double* p, double* f)
+{
+  double x = p[2] - r;
+  double r2 = r * r ;
+  double r6 = r2 * r2 * r2;
+  double r8 = r6 * r2 ;
+
+  *f = p[0] * exp( x / p[1]) - p[3] / r6 + p[4] / r8 ;
+}
 
 /****************************************************************
   softshell potential

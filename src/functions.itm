@@ -32,6 +32,7 @@ FUNCTION(eopp, 6);
 FUNCTION(morse, 3);
 FUNCTION(ms, 3);
 FUNCTION(buck, 3);
+FUNCTION(born, 5);
 FUNCTION(softshell, 2);
 FUNCTION(eopp_exp, 6);
 FUNCTION(meopp, 7);

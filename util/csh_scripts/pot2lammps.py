@@ -4,19 +4,23 @@ def parse_args():
     parser = ArgumentParser(
         description = 'Create input lammps file from pot file')
     parser.add_argument(
-        '-i',type=str,action="store",default='in.nafepo4',
+        'potfile',type=str,action="store",
+        help = 'Input potfit potential file')
+    parser.add_argument(
+        'lammpsin',type=str,action="store",
         help = 'Input lammps file')
     parser.add_argument(
-        '-f',type=str,action="store",default='pot_all.in',
-        help = 'Input potfile file')
-    parser.add_argument(
-        '-n',type=int,action="store",default=6,
+        '-n',type=int,action="store",
          help = 'Number of atoms')
     parser.add_argument(
         '-a',type=int,action="store",default=1,
-        help = 'are there angular interactions? 1-yes 0-no')
+        help = 'are there angular interactions? 1 (yes, default) 0 (no)')
     parser.add_argument(
-        '-o',type=str,action="store",default='in.nafepo4_potfit',
+        '-b',type=str,action="store",default='born',
+        choices=['born','buck'],
+        help = 'Pair potential format (default born)')
+    parser.add_argument(
+        '-o',type=str,action="store",default='in.dump',
         help = 'Write to this file')
     args = parser.parse_args()
     return args
@@ -59,11 +63,11 @@ from math import sqrt,floor
 
 
 args = parse_args()
-lfile = args.i
-pfile = args.f
-natoms = args.n
+lfile = args.lammpsin
+pfile = args.potfile
 angle = args.a
 output = args.o
+bkind = args.b
 
 # read potfit potential file
 
@@ -73,12 +77,17 @@ block = 0
 param = []
 x = []
 intkind = []
+spe = []
 with open(pfile) as p:
   #count number of interactions
   for line in p:
      if '#F ' in line:
         data = line.split()
         num_int = int(data[2])
+     if '#C ' in line:
+        data = line.split()
+        natoms = int(len(data))-1
+        spe = data[-natoms:]
      if '#' in line:
         continue    
      if 'type' in line:
@@ -102,6 +111,9 @@ with open(pfile) as p:
             x.append(float(data[1]))
      if bool(x):
         param.append(x)
+
+if(args.n):
+    natoms = args.n
 
 ##end with error if different functions found from specified at header
 if (len(intkind) != num_int):
@@ -141,11 +153,14 @@ for i in range(len(param)):
 
 # Write potential values on template
 
-string_vdw =  'pair_style   born/coul/dsf/cs 0.2  8.0  12.0    # A, rho, sigma=0, C, D\n'+ \
+string_vdw =  'pair_style   born/coul/dsf/cs 0.1  8.0  12.0    # A, rho, sigma=0, C, D\n'+ \
         'pair_coeff   *     *       0.0        1.0       0.0  0.0    0.0\n'
 
 for i in range(vdw):
-   string_vdw = string_vdw + 'pair_coeff  {0}   {1}   {2}   {3}   0.0  {4}   0.0\n'.format(ir[i],ic[i],matter[i][0],matter[i][1],matter[i][2]*matter[i][1]**6)
+   if (bkind =="born"):
+     string_vdw = string_vdw + 'pair_coeff  {0}   {1}   {2}   {3}   {4}  {5}   {6}     #{7}\n'.format(ir[i],ic[i],matter[i][0],matter[i][1],matter[i][2],matter[i][3],matter[i][4],spe[i])
+   elif (bkind =="buck"):
+     string_vdw = string_vdw + 'pair_coeff  {0}   {1}   {2}   {3}   0.0  {4}   0.0\n'.format(ir[i],ic[i],matter[i][0],matter[i][1],matter[i][2]*matter[i][1]**6)
 
 str_bond = 'bond_style harmonic\n'
 
